@@ -1,0 +1,27 @@
+:root {
+  --ink-gold: #b8933c;
+  --ink-bg: #f5f3ee;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--ink-bg);
+  color: #2c2c2c;
+}
+
+.filter-bar {
+  margin-bottom: 16px;
+}
+
+.pager {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
