@@ -1,0 +1,69 @@
+{
+  "pages": [
+    {
+      "path": "pages/reading/index",
+      "style": {
+        "navigationBarTitleText": "道德经",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/profile/index",
+      "style": {
+        "navigationBarTitleText": "个人中心"
+      }
+    },
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/profile/comments",
+      "style": {
+        "navigationBarTitleText": "我的留言"
+      }
+    },
+    {
+      "path": "pages/profile/likes",
+      "style": {
+        "navigationBarTitleText": "我的点赞"
+      }
+    },
+    {
+      "path": "pages/profile/replies",
+      "style": {
+        "navigationBarTitleText": "历史回复"
+      }
+    },
+    {
+      "path": "pages/profile/favorites",
+      "style": {
+        "navigationBarTitleText": "修道藏经"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "道德经",
+    "navigationBarBackgroundColor": "#1a1a1a",
+    "backgroundColor": "#0a0a0a"
+  },
+  "tabBar": {
+    "color": "#888888",
+    "selectedColor": "#d4af37",
+    "backgroundColor": "#1a1a1a",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/reading/index",
+        "text": "阅读"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的"
+      }
+    ]
+  }
+}
