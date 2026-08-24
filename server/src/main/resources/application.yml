@@ -1,0 +1,42 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: daodejing-server
+  datasource:
+    url: jdbc:mysql://localhost:3306/daodejing?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+      encoding: utf-8
+      continue-on-error: false
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+
+app:
+  jwt:
+    # 生产环境务必通过环境变量覆盖
+    secret: ${JWT_SECRET:daodejing-dev-secret-key-change-me-in-production-0824}
+    expire-days: 30
+  wx:
+    # 开发期 mock 模式：wx-login 直接把 code 当 openid 使用，无需真实 AppID
+    mock: ${WX_MOCK:true}
+    appid: ${WX_APPID:your-appid}
+    secret: ${WX_SECRET:your-secret}
+
+logging:
+  level:
+    com.daodejing: info
