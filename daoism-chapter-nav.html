@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <title>道德经 · 章节目录</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "KaiTi", "STKaiti", "KaiTi_GB2312", "Songti SC", serif;
+            min-height: 100vh;
+            color: #e2e2e2;
+            background: radial-gradient(ellipse at center, rgb(40,40,40) 0%, #0e0e0e 100%);
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300;
+        }
+
+        /* ===== 顶部导航 ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 20px 15px;
+            position: sticky;
+            top: 0;
+            background: rgba(14, 14, 14, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: rgba(232, 228, 220, 0.8);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            display: flex;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.08);
+            color: rgba(248, 246, 242, 0.9);
+        }
+
+        .header-title {
+            flex: 1;
+            text-align: center;
+            font-size: 18px;
+            letter-spacing: 4px;
+            color: rgba(248, 246, 242, 0.9);
+        }
+
+        .header-spacer {
+            width: 40px;
+        }
+
+        /* ===== 搜索栏 ===== */
+        .search-section {
+            padding: 20px;
+            position: sticky;
+            top: 81px;
+            background: rgba(14, 14, 14, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 99;
+        }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 50px 14px 20px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: #e2e2e2;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: rgba(212, 175, 55, 0.3);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255,255,255,0.3);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.3);
+            pointer-events: none;
+        }
+
+        .clear-btn {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: rgba(255,255,255,0.6);
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* ===== 章节网格 ===== */
+        .content {
+            padding: 20px;
+            padding-bottom: 40px;
+        }
+
+        .chapters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+        }
+
+        .chapter-card {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chapter-card:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(212, 175, 55, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .chapter-card:active {
+            transform: scale(0.95);
+        }
+
+        .chapter-card.active {
+            border-color: rgba(212, 175, 55, 0.5);
+            background: rgba(212, 175, 55, 0.08);
+        }
+
+        .chapter-card.active::after {
+            content: '当前';
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-size: 10px;
+            color: #d4af37;
+            padding: 2px 6px;
+            background: rgba(212, 175, 55, 0.15);
+            border-radius: 8px;
+        }
+
+        .chapter-num {
+            font-size: 12px;
+            color: rgba(200, 184, 152, 0.6);
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .chapter-title {
+            font-size: 14px;
+            color: rgba(248, 246, 242, 0.9);
+            text-align: center;
+            letter-spacing: 1px;
+            line-height: 1.4;
+            padding: 0 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* ===== 列表视图 ===== */
+        .list-view {
+            display: none;
+        }
+
+        .list-view.active {
+            display: block;
+        }
+
+        .chapter-list {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .list-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .list-item:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .list-item.active {
+            background: rgba(212, 175, 55, 0.08);
+            border-left: 3px solid #d4af37;
+        }
+
+        .list-num {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d4af37;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .list-item.active .list-num {
+            background: rgba(212, 175, 55, 0.15);
+        }
+
+        .list-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .list-title {
+            font-size: 16px;
+            color: rgba(248, 246, 242, 0.9);
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .list-preview {
+            font-size: 13px;
+            color: rgba(255,255,255,0.4);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .list-arrow {
+            color: rgba(255,255,255,0.2);
+            font-size: 18px;
+        }
+
+        /* ===== 视图切换 ===== */
+        .view-toggle {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .toggle-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.05);
+            color: rgba(232, 228, 220, 0.6);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: rgba(248, 246, 242, 0.9);
+        }
+
+        .toggle-btn.active {
+            background: rgba(212, 175, 55, 0.15);
+            border-color: rgba(212, 175, 55, 0.4);
+            color: #d4af37;
+        }
+
+        /* ===== 快速跳转 ===== */
+        .quick-nav {
+            position: fixed;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 100;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .quick-nav::-webkit-scrollbar {
+            width: 2px;
+        }
+
+        .quick-nav-item {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: rgba(255,255,255,0.4);
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .quick-nav-item:hover {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: rgba(212, 175, 55, 0.4);
+            color: #d4af37;
+        }
+
+        /* ===== 空状态 ===== */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 16px;
+            letter-spacing: 2px;
+        }
+
+        /* ===== 搜索结果统计 ===== */
+        .search-stats {
+            text-align: center;
+            padding: 15px 20px;
+            color: rgba(255,255,255,0.4);
+            font-size: 13px;
+            letter-spacing: 1px;
+            display: none;
+        }
+
+        .search-stats.active {
+            display: block;
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (min-width: 768px) {
+            .chapters-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 16px;
+            }
+
+            .content {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 30px;
+            }
+        }
+
+        /* ===== 动画 ===== */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chapter-card, .list-item {
+            animation: fadeInUp 0.3s ease backwards;
+        }
+
+        .chapter-card:nth-child(1), .list-item:nth-child(1) { animation-delay: 0.02s; }
+        .chapter-card:nth-child(2), .list-item:nth-child(2) { animation-delay: 0.04s; }
+        .chapter-card:nth-child(3), .list-item:nth-child(3) { animation-delay: 0.06s; }
+        .chapter-card:nth-child(4), .list-item:nth-child(4) { animation-delay: 0.08s; }
+        .chapter-card:nth-child(5), .list-item:nth-child(5) { animation-delay: 0.10s; }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <header class="header">
+        <button class="back-btn" onclick="goBack()">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1 class="header-title">八十一章目录</h1>
+        <div class="header-spacer"></div>
+    </header>
+
+    <!-- 搜索栏 -->
+    <section class="search-section">
+        <div class="search-box">
+            <input
+                type="text"
+                class="search-input"
+                id="searchInput"
+                placeholder="搜索章节标题或内容..."
+                oninput="handleSearch(this.value)"
+            />
+            <span class="search-icon material-symbols-outlined">search</span>
+            <button class="clear-btn" id="clearBtn" onclick="clearSearch()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="search-stats" id="searchStats"></div>
+    </section>
+
+    <!-- 主要内容 -->
+    <main class="content">
+        <!-- 网格视图 -->
+        <div class="chapters-grid" id="gridView"></div>
+
+        <!-- 列表视图 -->
+        <div class="list-view" id="listView">
+            <div class="chapter-list" id="chapterList"></div>
+        </div>
+
+        <!-- 空状态 -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-icon material-symbols-outlined">search_off</div>
+            <div class="empty-text">未找到相关章节</div>
+        </div>
+    </main>
+
+    <!-- 视图切换按钮 -->
+    <div class="view-toggle">
+        <button class="toggle-btn active" id="gridBtn" onclick="switchView('grid')" title="网格视图">
+            <span class="material-symbols-outlined">grid_view</span>
+        </button>
+        <button class="toggle-btn" id="listBtn" onclick="switchView('list')" title="列表视图">
+            <span class="material-symbols-outlined">view_list</span>
+        </button>
+    </div>
+
+    <!-- 快速导航 -->
+    <nav class="quick-nav" id="quickNav"></nav>
+
+    <script>
+        // 道德经81章完整数据
+        const chapters = [
+            { id: 1, title: "道可道", content: "道可道，非常道；名可名，非常名。无名，天地之始；有名，万物之母。" },
+            { id: 2, title: "天下皆知美", content: "天下皆知美之为美，斯恶已；皆知善之为善，斯不善已。故有无相生，难易相成。" },
+            { id: 3, title: "不尚贤", content: "不尚贤，使民不争；不贵难得之货，使民不为盗；不见可欲，使民心不乱。" },
+            { id: 4, title: "道冲", content: "道冲，而用之或不盈。渊兮，似万物之宗。挫其锐，解其纷，和其光，同其尘。" },
+            { id: 5, title: "天地不仁", content: "天地不仁，以万物为刍狗；圣人不仁，以百姓为刍狗。天地之间，其犹橐龠乎？" },
+            { id: 6, title: "谷神不死", content: "谷神不死，是谓玄牝。玄牝之门，是谓天地根。绵绵若存，用之不勤。" },
+            { id: 7, title: "天长地久", content: "天长地久。天地所以能长且久者，以其不自生，故能长生。是以圣人后其身而身先。" },
+            { id: 8, title: "上善若水", content: "上善若水。水善利万物而不争，处众人之所恶，故几于道。居善地，心善渊。" },
+            { id: 9, title: "持而盈之", content: "持而盈之，不如其已；揣而锐之，不可长保。金玉满堂，莫之能守；富贵而骄，自遗其咎。" },
+            { id: 10, title: "载营魄抱一", content: "载营魄抱一，能无离乎？专气致柔，能婴儿乎？涤除玄览，能无疵乎？爱民治国，能无为乎？" },
+            { id: 11, title: "三十辐共一毂", content: "三十辐共一毂，当其无，有车之用。埏埴以为器，当其无，有器之用。" },
+            { id: 12, title: "五色令人目盲", content: "五色令人目盲；五音令人耳聋；五味令人口爽；驰骋畋猎，令人心发狂。" },
+            { id: 13, title: "宠辱若惊", content: "宠辱若惊，贵大患若身。何谓宠辱若惊？宠为下，得之若惊，失之若惊，是谓宠辱若惊。" },
+            { id: 14, title: "视之不见", content: "视之不见，名曰夷；听之不闻，名曰希；搏之不得，名曰微。此三者不可致诘，故混而为一。" },
+            { id: 15, title: "古之善为士者", content: "古之善为士者，微妙玄通，深不可识。夫唯不可识，故强为之容：豫兮若冬涉川；犹兮若畏四邻。" },
+            { id: 16, title: "致虚极", content: "致虚极，守静笃。万物并作，吾以观复。夫物芸芸，各复归其根。归根曰静，静曰复命。" },
+            { id: 17, title: "太上", content: "太上，不知有之；其次，亲而誉之；其次，畏之；其次，侮之。信不足焉，有不信焉。" },
+            { id: 18, title: "大道废", content: "大道废，有仁义；智慧出，有大伪；六亲不和，有孝慈；国家昏乱，有忠臣。" },
+            { id: 19, title: "绝圣弃智", content: "绝圣弃智，民利百倍；绝仁弃义，民复孝慈；绝巧弃利，盗贼无有。此三者以为文，不足。" },
+            { id: 20, title: "唯之与阿", content: "唯之与阿，相去几何？善之与恶，相去若何？人之所畏，不可不畏。荒兮，其未央哉！" },
+            { id: 21, title: "孔德之容", content: "孔德之容，惟道是从。道之为物，惟恍惟惚。惚兮恍兮，其中有象；恍兮惚兮，其中有物。" },
+            { id: 22, title: "曲则全", content: "曲则全，枉则直，洼则盈，敝则新，少则得，多则惑。是以圣人抱一为天下式。" },
+            { id: 23, title: "希言自然", content: "希言自然。故飘风不终朝，骤雨不终日。孰为此者？天地。天地尚不能久，而况于人乎？" },
+            { id: 24, title: "企者不立", content: "企者不立；跨者不行；自见者不明；自是者不彰；自伐者无功；自矜者不长。" },
+            { id: 25, title: "有物混成", content: "有物混成，先天地生。寂兮寥兮，独立而不改，周行而不殆，可以为天下母。吾不知其名，字之曰道。" },
+            { id: 26, title: "重为轻根", content: "重为轻根，静为躁君。是以圣人终日不离辎重。虽有荣观，燕处超然。奈何万乘之主，而以身轻天下？" },
+            { id: 27, title: "善行无辙迹", content: "善行无辙迹，善言无瑕谪；善数不用筹策；善闭无关楗而不可开，善结无绳约而不可解。" },
+            { id: 28, title: "知其雄", content: "知其雄，守其雌，为天下溪。为天下溪，常德不离，复归于婴儿。知其白，守其黑，为天下式。" },
+            { id: 29, title: "将欲取天下", content: "将欲取天下而为之，吾见其不得已。天下神器，不可为也，不可执也。为者败之，执者失之。" },
+            { id: 30, title: "以道佐人主者", content: "以道佐人主者，不以兵强天下。其事好还。师之所处，荆棘生焉。大军之后，必有凶年。" },
+            { id: 31, title: "夫佳兵者", content: "夫佳兵者，不祥之器。物或恶之，故有道者不处。君子居则贵左，用兵则贵右。" },
+            { id: 32, title: "道常无名", content: "道常无名。朴虽小，天下莫能臣。侯王若能守之，万物将自宾。天地相合，以降甘露。" },
+            { id: 33, title: "知人者智", content: "知人者智，自知者明。胜人者有力，自胜者强。知足者富。强行者有志。不失其所者久。" },
+            { id: 34, title: "大道泛兮", content: "大道泛兮，其可左右。万物恃之以生而不辞，功成不名有。衣养万物而不为主，常无欲，可名于小。" },
+            { id: 35, title: "执大象", content: "执大象，天下往。往而不害，安平太。乐与饵，过客止。道之出口，淡乎其无味，视之不足见。" },
+            { id: 36, title: "将欲歙之", content: "将欲歙之，必固张之；将欲弱之，必固强之；将欲废之，必固兴之；将欲取之，必固与之。" },
+            { id: 37, title: "道常无为", content: "道常无为而无不为。侯王若能守之，万物将自化。化而欲作，吾将镇之以无名之朴。" },
+            { id: 38, title: "上德不德", content: "上德不德，是以有德；下德不失德，是以无德。上德无为而无以为；下德为之而有以为。" },
+            { id: 39, title: "昔之得一者", content: "昔之得一者：天得一以清；地得一以宁；神得一以灵；谷得一以盈；万物得一以生；侯王得一以为天下正。" },
+            { id: 40, title: "反者道之动", content: "反者道之动；弱者道之用。天下万物生于有，有生于无。" },
+            { id: 41, title: "上士闻道", content: "上士闻道，勤而行之；中士闻道，若存若亡；下士闻道，大笑之。不笑不足以为道。" },
+            { id: 42, title: "道生一", content: "道生一，一生二，二生三，三生万物。万物负阴而抱阳，冲气以为和。" },
+            { id: 43, title: "天下之至柔", content: "天下之至柔，驰骋天下之至坚。无有入无间，吾是以知无为之有益。不言之教，无为之益，天下希及之。" },
+            { id: 44, title: "名与身孰亲", content: "名与身孰亲？身与货孰多？得与亡孰病？甚爱必大费；多藏必厚亡。故知足不辱，知止不殆，可以长久。" },
+            { id: 45, title: "大成若缺", content: "大成若缺，其用不弊。大盈若冲，其用不穷。大直若屈，大巧若拙，大辩若讷。" },
+            { id: 46, title: "天下有道", content: "天下有道，却走马以粪。天下无道，戎马生于郊。祸莫大于不知足；咎莫大于欲得。" },
+            { id: 47, title: "不出户", content: "不出户，知天下；不窥牖，见天道。其出弥远，其知弥少。是以圣人不行而知，不见而名，不为而成。" },
+            { id: 48, title: "为学日益", content: "为学日益，为道日损。损之又损，以至于无为。无为而无不为。取天下常以无事，及其有事，不足以取天下。" },
+            { id: 49, title: "圣人无常心", content: "圣人无常心，以百姓心为心。善者，吾善之；不善者，吾亦善之，德善。信者，吾信之；不信者，吾亦信之，德信。" },
+            { id: 50, title: "出生入死", content: "出生入死。生之徒，十有三；死之徒，十有三；人之生，动之死地，亦十有三。夫何故？以其生生之厚。" },
+            { id: 51, title: "道生之", content: "道生之，德畜之，物形之，势成之。是以万物莫不尊道而贵德。道之尊，德之贵，夫莫之命而常自然。" },
+            { id: 52, title: "天下有始", content: "天下有始，以为天下母。既得其母，以知其子；既知其子，复守其母，没身不殆。" },
+            { id: 53, title: "使我介然有知", content: "使我介然有知，行于大道，唯施是畏。大道甚夷，而人好径。朝甚除，田甚芜，仓甚虚；服文彩，带利剑。" },
+            { id: 54, title: "善建者不拔", content: "善建者不拔，善抱者不脱，子孙以祭祀不辍。修之于身，其德乃真；修之于家，其德乃余；修之于乡，其德乃长。" },
+            { id: 55, title: "含德之厚", content: "含德之厚，比于赤子。毒虫不螫，猛兽不据，攫鸟不搏。骨弱筋柔而握固。未知牝牡之合而全作，精之至也。" },
+            { id: 56, title: "知者不言", content: "知者不言，言者不知。塞其兑，闭其门，挫其锐，解其纷，和其光，同其尘，是谓玄同。" },
+            { id: 57, title: "以正治国", content: "以正治国，以奇用兵，以无事取天下。吾何以知其然哉？以此：天下多忌讳，而民弥贫；民多利器，国家滋昏。" },
+            { id: 58, title: "其政闷闷", content: "其政闷闷，其民淳淳；其政察察，其民缺缺。祸兮，福之所倚；福兮，祸之所伏。孰知其极？其无正也。" },
+            { id: 59, title: "治人事天", content: "治人事天，莫若啬。夫唯啬，是谓早服；早服谓之重积德；重积德则无不克；无不克则莫知其极。" },
+            { id: 60, title: "治大国", content: "治大国，若烹小鲜。以道莅天下，其鬼不神；非其鬼不神，其神不伤人；非其神不伤人，圣人亦不伤人。" },
+            { id: 61, title: "大国者下流", content: "大国者下流，天下之交，天下之牝。牝常以静胜牡，以静为下。故大国以下小国，则取小国；小国以下大国，则取大国。" },
+            { id: 62, title: "道者万物之奥", content: "道者万物之奥。善人之宝，不善人之所保。美言可以市尊，美行可以加人。人之不善，何弃之有？" },
+            { id: 63, title: "为无为", content: "为无为，事无事，味无味。大小多少，报怨以德。图难于其易，为大于其细。天下难事，必作于易；天下大事，必作于细。" },
+            { id: 64, title: "其安易持", content: "其安易持，其未兆易谋。其脆易泮，其微易散。为之于未有，治之于未乱。合抱之木，生于毫末；九层之台，起于累土。" },
+            { id: 65, title: "古之善为道者", content: "古之善为道者，非以明民，将以愚之。民之难治，以其智多。故以智治国，国之贼；不以智治国，国之福。" },
+            { id: 66, title: "江海所以能为百谷王者", content: "江海所以能为百谷王者，以其善下之，故能为百谷王。是以圣人欲上民，必以言下之；欲先民，必以身后之。" },
+            { id: 67, title: "天下皆谓我道大", content: "天下皆谓我道大，似不肖。夫唯大，故似不肖。若肖，久矣其细也夫！我有三宝，持而保之：一曰慈，二曰俭，三曰不敢为天下先。" },
+            { id: 68, title: "善为士者", content: "善为士者，不武；善战者，不怒；善胜敌者，不与；善用人者，为之下。是谓不争之德，是谓用人之力，是谓配天，古之极。" },
+            { id: 69, title: "用兵有言", content: "用兵有言：吾不敢为主，而为客；不敢进寸，而退尺。是谓行无行；攘无臂；扔无敌；执无兵。" },
+            { id: 70, title: "吾言甚易知", content: "吾言甚易知，甚易行。天下莫能知，莫能行。言有宗，事有君。夫唯无知，是以不我知。知我者希，则我者贵。" },
+            { id: 71, title: "知不知", content: "知不知，上；不知知，病。夫唯病病，是以不病。圣人不病，以其病病，是以不病。" },
+            { id: 72, title: "民不畏威", content: "民不畏威，则大威至。无狎其所居，无厌其所生。夫唯不厌，是以不厌。是以圣人自知不自见；自爱不自贵。" },
+            { id: 73, title: "勇于敢则杀", content: "勇于敢则杀，勇于不敢则活。此两者，或利或害。天之所恶，孰知其故？是以圣人犹难之。" },
+            { id: 74, title: "民不畏死", content: "民不畏死，奈何以死惧之？若使民常畏死，而为奇者，吾得执而杀之，孰敢？常有司杀者杀。夫代司杀者杀，是谓代大匠斫。" },
+            { id: 75, title: "民之饥", content: "民之饥，以其上食税之多，是以饥。民之难治，以其上之有为，是以难治。民之轻死，以其求生之厚，是以轻死。" },
+            { id: 76, title: "人之生也柔弱", content: "人之生也柔弱，其死也坚强。草木之生也柔脆，其死也枯槁。故坚强者死之徒，柔弱者生之徒。" },
+            { id: 77, title: "天之道", content: "天之道，其犹张弓与？高者抑之，下者举之；有余者损之，不足者补之。天之道，损有余而补不足。人之道，则不然，损不足以奉有余。" },
+            { id: 78, title: "天下莫柔弱于水", content: "天下莫柔弱于水，而攻坚强者莫之能胜，以其无以易之。弱之胜强，柔之胜刚，天下莫不知，莫能行。" },
+            { id: 79, title: "和大怨", content: "和大怨，必有余怨，安可以为善？是以圣人执左契，而不责于人。有德司契，无德司彻。天道无亲，常与善人。" },
+            { id: 80, title: "小国寡民", content: "小国寡民。使有什伯之器而不用；使民重死而不远徙。虽有舟舆，无所乘之；虽有甲兵，无所陈之。" },
+            { id: 81, title: "信言不美", content: "信言不美，美言不信。善者不辩，辩者不善。知者不博，博者不知。圣人不积，既以为人己愈有，既以与人己愈多。" }
+        ];
+
+        // 当前章节（从URL参数或localStorage获取）
+        let currentChapterId = 1;
+
+        // 当前视图模式
+        let currentView = 'grid';
+
+        // 初始化
+        function init() {
+            // 获取当前章节ID
+            const urlParams = new URLSearchParams(window.location.search);
+            currentChapterId = parseInt(urlParams.get('chapter')) ||
+                                parseInt(localStorage.getItem('daoism-chapter-index')) + 1 || 1;
+
+            renderAll();
+            createQuickNav();
+        }
+
+        // 渲染所有内容
+        function renderAll(filteredChapters = chapters) {
+            renderGridView(filteredChapters);
+            renderListView(filteredChapters);
+            updateEmptyState(filteredChapters);
+        }
+
+        // 渲染网格视图
+        function renderGridView(chaptersToRender) {
+            const container = document.getElementById('gridView');
+            container.innerHTML = chaptersToRender.map(chapter => `
+                <div class="chapter-card ${chapter.id === currentChapterId ? 'active' : ''}"
+                     onclick="goToChapter(${chapter.id})">
+                    <div class="chapter-num">第${chapter.id}章</div>
+                    <div class="chapter-title">${chapter.title}</div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染列表视图
+        function renderListView(chaptersToRender) {
+            const container = document.getElementById('chapterList');
+            container.innerHTML = chaptersToRender.map(chapter => `
+                <div class="list-item ${chapter.id === currentChapterId ? 'active' : ''}"
+                     onclick="goToChapter(${chapter.id})">
+                    <div class="list-num">${chapter.id}</div>
+                    <div class="list-content">
+                        <div class="list-title">${chapter.title}</div>
+                        <div class="list-preview">${chapter.content}</div>
+                    </div>
+                    <span class="list-arrow material-symbols-outlined">chevron_right</span>
+                </div>
+            `).join('');
+        }
+
+        // 更新空状态显示
+        function updateEmptyState(chaptersToRender) {
+            const emptyState = document.getElementById('emptyState');
+            const gridView = document.getElementById('gridView');
+            const listView = document.getElementById('listView');
+
+            if (chaptersToRender.length === 0) {
+                emptyState.style.display = 'block';
+                gridView.style.display = 'none';
+                listView.style.display = 'none';
+            } else {
+                emptyState.style.display = 'none';
+                gridView.style.display = currentView === 'grid' ? 'grid' : 'none';
+                listView.style.display = currentView === 'list' ? 'block' : 'none';
+            }
+        }
+
+        // 创建快速导航
+        function createQuickNav() {
+            const container = document.getElementById('quickNav');
+            // 按区间分组（1-10, 11-20, ...）
+            const groups = [];
+            for (let i = 1; i <= 81; i += 10) {
+                groups.push(i);
+            }
+
+            container.innerHTML = groups.map(start => `
+                <div class="quick-nav-item" onclick="scrollToGroup(${start})" title="第${start}-${Math.min(start + 9, 81)}章">
+                    ${start}
+                </div>
+            `).join('');
+        }
+
+        // 滚动到指定分组
+        function scrollToGroup(startChapter) {
+            const chapterCards = document.querySelectorAll('.chapter-card');
+            const targetIndex = startChapter - 1;
+            if (chapterCards[targetIndex]) {
+                chapterCards[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // 搜索功能
+        function handleSearch(query) {
+            const clearBtn = document.getElementById('clearBtn');
+            const searchStats = document.getElementById('searchStats');
+
+            if (query.trim()) {
+                clearBtn.style.display = 'flex';
+
+                // 搜索标题和内容
+                const filtered = chapters.filter(chapter =>
+                    chapter.title.toLowerCase().includes(query.toLowerCase()) ||
+                    chapter.content.includes(query)
+                );
+
+                renderAll(filtered);
+
+                // 显示搜索统计
+                searchStats.textContent = `找到 ${filtered.length} 个相关章节`;
+                searchStats.classList.add('active');
+            } else {
+                clearSearch();
+            }
+        }
+
+        // 清除搜索
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearBtn').style.display = 'none';
+            document.getElementById('searchStats').classList.remove('active');
+            renderAll(chapters);
+        }
+
+        // 切换视图
+        function switchView(view) {
+            currentView = view;
+
+            const gridBtn = document.getElementById('gridBtn');
+            const listBtn = document.getElementById('listBtn');
+            const gridView = document.getElementById('gridView');
+            const listView = document.getElementById('listView');
+
+            if (view === 'grid') {
+                gridBtn.classList.add('active');
+                listBtn.classList.remove('active');
+                gridView.style.display = 'grid';
+                listView.classList.remove('active');
+            } else {
+                listBtn.classList.add('active');
+                gridBtn.classList.remove('active');
+                listView.classList.add('active');
+                gridView.style.display = 'none';
+            }
+        }
+
+        // 跳转到指定章节
+        function goToChapter(chapterId) {
+            // 保存当前章节到localStorage
+            localStorage.setItem('daoism-chapter-index', chapterId - 1);
+
+            // 返回阅读页面并传递章节ID
+            window.location.href = `daoism-forum.html?chapter=${chapterId}`;
+        }
+
+        // 返回上一页
+        function goBack() {
+            if (document.referrer && document.referrer.includes(window.location.hostname)) {
+                window.history.back();
+            } else {
+                window.location.href = 'daoism-forum.html';
+            }
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                clearSearch();
+                document.getElementById('searchInput').blur();
+            }
+            if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+        });
+
+        // 页面加载时初始化
+        init();
+    </script>
+</body>
+</html>
