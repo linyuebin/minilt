@@ -1,0 +1,2238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <title>道德经</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "KaiTi", "STKaiti", "KaiTi_GB2312", "Songti SC", serif;
+            height: 100vh;
+            height: 100dvh;
+            color: #e2e2e2;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: radial-gradient(ellipse at center, rgb(40,40,40) 0%, #0e0e0e 100%);
+        }
+
+        /* 淡入动画 */
+        @keyframes fade-in {
+            from { opacity: 0; filter: blur(10px); }
+            to { opacity: 1; filter: blur(0); }
+        }
+
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== 通用布局 ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 35px 25px 20px;
+            transition: all 0.6s ease;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            flex: 1;
+        }
+
+        .logo {
+            font-size: 24px;
+            letter-spacing: 10px;
+            font-weight: 300;
+            color: rgba(248, 246, 242, 0.9);
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .fullscreen-btn {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: rgba(232, 228, 220, 0.8);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .fullscreen-btn.visible {
+            opacity: 0.6;
+            pointer-events: auto;
+        }
+
+        .fullscreen-btn:hover {
+            opacity: 1;
+            background: rgba(255,255,255,0.08);
+        }
+
+        .fullscreen-btn:active {
+            transform: translateY(-50%) scale(0.9);
+        }
+
+        .icon-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.08);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.03);
+            color: rgba(248, 246, 242, 0.8);
+        }
+
+        .icon-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* 章节导航面板 */
+        .nav-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 320px;
+            max-width: 85vw;
+            z-index: 200;
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: rgba(14, 14, 14, 0.95);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-right: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .nav-panel.active {
+            transform: translateX(0);
+        }
+
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+
+        .nav-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #d4af37;
+            letter-spacing: 2px;
+        }
+
+        .nav-search {
+            padding: 15px 20px;
+            flex-shrink: 0;
+        }
+
+        .nav-search-input {
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: #e2e2e2;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-search-input:focus {
+            border-color: rgba(212, 175, 55, 0.3);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .nav-search-input::placeholder {
+            color: rgba(255,255,255,0.3);
+        }
+
+        .nav-content {
+            flex: 1;
+            min-height: 0;
+            padding: 0 20px 20px;
+            overflow-y: auto;
+        }
+
+        .nav-chapter-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 8px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-chapter-item:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .nav-chapter-item.active {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: rgba(212, 175, 55, 0.2);
+        }
+
+        .nav-chapter-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d4af37;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .nav-chapter-item.active .nav-chapter-num {
+            background: rgba(212, 175, 55, 0.2);
+        }
+
+        .nav-chapter-title {
+            flex: 1;
+            font-size: 14px;
+            color: rgba(248, 246, 242, 0.8);
+            letter-spacing: 1px;
+        }
+
+        .nav-chapter-item.active .nav-chapter-title {
+            color: #d4af37;
+        }
+
+        .nav-footer {
+            padding: 15px 20px 20px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        .nav-progress {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 1px;
+        }
+
+        /* 入定模式样式调整 */
+        body.meditation-mode .header,
+        body.meditation-mode .bottom-section {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .meditation-exit {
+            position: fixed;
+            top: 40px;
+            right: 30px;
+            z-index: 300;
+            color: rgba(255,255,255,0.3);
+            font-size: 14px;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        body.meditation-mode .meditation-exit {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        body.meditation-mode .meditation-exit.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        body.meditation-mode .fullscreen-btn {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        body.meditation-mode .fullscreen-btn.visible {
+            opacity: 0.6;
+            pointer-events: auto;
+        }
+
+        .main-content {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition: all 0.6s ease;
+            padding: 20px 40px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .chapter-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            max-width: 100%;
+            max-height: 100%;
+            overflow: auto;
+        }
+
+        .chapter-container.flip-out {
+            opacity: 0;
+            transform: rotateY(90deg) scale(0.9);
+        }
+
+        .chapter-container.flip-in {
+            opacity: 0;
+            transform: rotateY(-90deg) scale(0.9);
+        }
+
+        /* 章节标题 */
+        .chapter-header {
+            text-align: center;
+            margin-bottom: 15px;
+            opacity: 0;
+            animation: fade-in 1.5s ease-out 0.3s forwards;
+        }
+
+        .chapter-num {
+            font-size: 11px;
+            color: rgba(212, 175, 55, 0.5);
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+        }
+
+        .chapter-divider {
+            width: 35px;
+            height: 1px;
+            background: rgba(212, 175, 55, 0.25);
+            margin: 0 auto;
+        }
+
+        /* 横向文字样式 */
+        .chapter-content-horizontal {
+            font-size: 1.25rem;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.95);
+            text-align: center;
+            letter-spacing: 0.25em;
+            opacity: 0;
+            animation: fade-in 2s ease-out 1s forwards;
+            padding: 0 2rem;
+            max-width: 90vw;
+        }
+
+        @media (min-width: 768px) and (min-height: 600px) {
+            .chapter-content-horizontal {
+                font-size: 1.75rem;
+                line-height: 3.5;
+                max-width: 80vw;
+            }
+        }
+
+        /* 竖向文字样式 */
+        .chapter-content-vertical {
+            font-size: 1.4rem;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.95);
+            text-align: center;
+            letter-spacing: 0.35em;
+            opacity: 0;
+            animation: fade-in 2s ease-out 1s forwards;
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            height: 55vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 1.25em;
+            padding: 2rem 0;
+        }
+
+        @media (min-width: 768px) and (min-height: 600px) {
+            .chapter-content-vertical {
+                font-size: 1.8rem;
+                height: 60vh;
+                gap: 1.5em;
+            }
+        }
+
+        /* 底部导航 */
+        .bottom-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px 40px;
+            transition: all 0.6s ease;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .nav-btn, .action-btn {
+            width: 48px;
+            height: 48px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 50%;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255,255,255,0.03);
+            color: rgba(232, 228, 220, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-btn::after, .action-btn::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            transform: scale(0);
+            transition: transform 0.3s ease-out;
+            opacity: 0;
+        }
+
+        .nav-btn:active::after, .action-btn:active::after {
+            transform: scale(1);
+            opacity: 1;
+            transition: 0s;
+        }
+
+        .nav-btn:active, .action-btn:active {
+            transform: scale(0.9);
+        }
+
+        .center-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .action-btn.active {
+            color: #ff6b6b;
+            border-color: rgba(255, 107, 107, 0.3);
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.2);
+        }
+
+        .action-btn.orientation.active {
+            color: #e2e2e2;
+            border-color: rgba(226, 226, 226, 0.3);
+            box-shadow: 0 0 15px rgba(226, 226, 226, 0.2);
+        }
+
+        /* 遮罩层 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 主题面板 */
+        .theme-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-radius: 24px 24px 0 0;
+            padding: 25px 20px 35px;
+            z-index: 200;
+            transform: translateY(100%);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .theme-panel.active {
+            transform: translateY(0);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f8f6f2;
+        }
+
+        .close-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 14px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.05);
+            color: #f8f6f2;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .theme-option {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .theme-option:active {
+            transform: scale(0.95);
+        }
+
+        .theme-option.active {
+            border-color: #d4af37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .theme-option[data-scheme="default"] {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(10, 15, 20, 0.8));
+            color: #d4af37;
+        }
+
+        .theme-option[data-scheme="dark"] {
+            background: linear-gradient(135deg, #1a1a2e, #252540);
+            color: #4af;
+        }
+
+        .theme-option[data-scheme="nature"] {
+            background: linear-gradient(135deg, #2d4a3f, #1a3a2a);
+            color: #7cb85c;
+        }
+
+        .theme-option[data-scheme="purple"] {
+            background: linear-gradient(135deg, #3d2d4a, #2a1a3a);
+            color: #c9a85c;
+        }
+
+        .theme-option[data-scheme="ocean"] {
+            background: linear-gradient(135deg, #1a3a4a, #0a2a3a);
+            color: #4a9c8a;
+        }
+
+        .custom-bg-section {
+            padding: 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+        }
+
+        .custom-bg-title {
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 10px;
+        }
+
+        .upload-btn {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            background: transparent;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* 解读面板 */
+        .interpretation-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 80vh;
+            border-radius: 24px 24px 0 0;
+            z-index: 200;
+            transform: translateY(100%);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .interpretation-panel.active {
+            transform: translateY(0);
+        }
+
+        .panel-handle {
+            width: 40px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            margin: 15px auto;
+        }
+
+        .interpretation-content {
+            padding: 0 25px 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .interpretation-label {
+            font-size: 12px;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #d4af37;
+            opacity: 0.8;
+        }
+
+        .interpretation-text {
+            font-size: 15px;
+            line-height: 2.2;
+            margin-bottom: 30px;
+            color: #e8e4dc;
+            text-align: justify;
+        }
+
+        /* 评论区 */
+        .comments-header {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #f8f6f2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .comment-item {
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .comment-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a2a3a, #2a1a2a);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d4af37;
+            font-size: 14px;
+        }
+
+        .comment-user {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e8e4dc;
+        }
+
+        .comment-time {
+            font-size: 12px;
+            margin-left: auto;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .comment-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .comment-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .comment-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            transition: all 0.2s;
+            padding: 0;
+        }
+
+        .comment-action-btn:hover {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .comment-action-btn.liked {
+            color: #d4af37;
+        }
+
+        .comment-action-btn .material-symbols-outlined {
+            font-size: 16px;
+        }
+
+        .comment-likes {
+            font-size: 12px;
+        }
+
+        /* 回复样式 */
+        .replies-section {
+            margin-top: 12px;
+            padding-left: 12px;
+            border-left: 2px solid rgba(255,255,255,0.08);
+        }
+
+        .reply-item {
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+        }
+
+        .reply-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .reply-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a2a3a, #2a1a2a);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d4af37;
+            font-size: 10px;
+        }
+
+        .reply-user {
+            font-size: 12px;
+            font-weight: 500;
+            color: #e8e4dc;
+        }
+
+        .reply-time {
+            font-size: 11px;
+            margin-left: auto;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .reply-text {
+            font-size: 13px;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .reply-to {
+            color: rgba(212, 175, 55, 0.7);
+            font-weight: 500;
+        }
+
+        .reply-input-area {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .reply-input {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            font-size: 12px;
+            outline: none;
+            color: #e2e2e2;
+        }
+
+        .reply-input::placeholder {
+            color: rgba(255,255,255,0.25);
+        }
+
+        .reply-send-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #d4af37;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .reply-send-btn:hover {
+            background: rgba(212,175,55,0.15);
+        }
+
+        .show-replies-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            color: rgba(212, 175, 55, 0.7);
+            margin-top: 8px;
+            padding: 0;
+        }
+
+        .show-replies-btn:hover {
+            color: #d4af37;
+        }
+
+        .comment-input-area {
+            position: sticky;
+            bottom: 0;
+            padding: 15px 0 5px;
+            display: flex;
+            gap: 12px;
+            background: linear-gradient(0deg, rgba(15,20,25,1) 60%, rgba(15,20,25,0));
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            font-size: 14px;
+            outline: none;
+            color: #e2e2e2;
+        }
+
+        .comment-input::placeholder {
+            color: rgba(255,255,255,0.25);
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #d4af37;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .send-btn:active {
+            transform: scale(0.9);
+            background: rgba(212,175,55,0.2);
+        }
+
+        /* 收藏面板 - 重新设计为个人中心 */
+        .collection-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 180;
+            transform: translateX(100%);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: rgba(14, 14, 14, 0.95);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+        }
+
+        .collection-panel.active {
+            transform: translateX(0);
+        }
+
+        .collection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 25px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+
+        .collection-title {
+            font-size: 22px;
+            font-weight: 400;
+            color: #d4af37;
+            letter-spacing: 2px;
+        }
+
+        /* 标签页导航 */
+        .profile-tabs {
+            display: flex;
+            padding: 0 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+
+        .profile-tab {
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            font-size: 15px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .profile-tab.active {
+            color: #d4af37;
+        }
+
+        .profile-tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #d4af37;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .profile-tab.active::after {
+            transform: scaleX(1);
+        }
+
+        .collection-content {
+            flex: 1;
+            padding: 0 25px 20px;
+            overflow-y: auto;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .collection-item {
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .collection-item:active {
+            transform: scale(0.98);
+        }
+
+        .collection-item-number {
+            font-size: 11px;
+            color: #d4af37;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .collection-item-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #f8f6f2;
+        }
+
+        .collection-item-preview {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* 我的留言样式 */
+        .my-comment-item {
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .my-comment-chapter {
+            font-size: 12px;
+            color: #d4af37;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .my-comment-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 12px;
+        }
+
+        .my-comment-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .my-comment-likes {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .my-comment-replies {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 历史回复样式 */
+        .reply-history-item {
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .reply-history-chapter {
+            font-size: 12px;
+            color: #d4af37;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .reply-context {
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        .reply-context-user {
+            color: #d4af37;
+        }
+
+        .reply-history-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 12px;
+        }
+
+        .reply-history-time {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+        }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        /* 动画 */
+        @keyframes pulse {
+            0% { opacity: 0.1; }
+            50% { opacity: 0.15; }
+            100% { opacity: 0.1; }
+        }
+
+        .pulse {
+            animation: pulse 0.5s cubic-bezier(0.66, 0, 0, 1);
+        }
+
+        .bottom-anchor {
+            position: fixed;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 128px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            z-index: 50;
+            pointer-events: none;
+            opacity: 0;
+            animation: fade-in 2.5s ease-out 2.5s forwards;
+        }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+        }
+
+        ::selection {
+            background: rgba(212, 175, 55, 0.3);
+            color: #fff;
+        }
+
+        /* 全屏状态下的样式 */
+        body.fullscreen-active .fullscreen-btn {
+            opacity: 0.3;
+        }
+
+        /* 横屏模式样式调整（全屏与非全屏都生效） */
+        @media (orientation: landscape) and (max-height: 600px) {
+            .chapter-content-horizontal {
+                font-size: 1.1rem;
+                line-height: 1.6;
+                max-width: 95vw;
+                padding: 0 1rem;
+            }
+
+            .chapter-content-vertical {
+                font-size: 1.2rem;
+                height: auto;
+                max-height: 100%;
+                gap: 1em;
+                padding: 0.5rem 0;
+            }
+
+            .header {
+                padding: 12px 20px 8px;
+            }
+
+            .logo {
+                font-size: 20px;
+            }
+
+            .icon-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 14px;
+            }
+
+            .main-content {
+                padding: 8px 40px;
+            }
+
+            .bottom-section {
+                padding: 8px 20px 12px;
+            }
+
+            .nav-btn,
+            .action-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+
+            .bottom-anchor {
+                display: none;
+            }
+        }
+
+        /* 极矮横屏进一步压缩 */
+        @media (orientation: landscape) and (max-height: 440px) {
+            .chapter-content-horizontal {
+                font-size: 0.95rem;
+                line-height: 1.45;
+                letter-spacing: 0.2em;
+            }
+
+            .chapter-content-vertical {
+                font-size: 1rem;
+                gap: 0.8em;
+            }
+
+            .header {
+                padding: 8px 16px 4px;
+            }
+
+            .logo {
+                font-size: 17px;
+                letter-spacing: 6px;
+            }
+
+            .main-content {
+                padding: 4px 24px;
+            }
+
+            .bottom-section {
+                padding: 6px 16px 8px;
+            }
+
+            .nav-btn,
+            .action-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+
+            .center-actions {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 退出入定模式按钮 -->
+    <div class="meditation-exit" onclick="toggleMeditation()">退出入定</div>
+
+    <!-- 顶部导航 -->
+    <header class="header">
+        <div class="header-title">
+            <div class="logo">道德经</div>
+        </div>
+        <div class="header-icons">
+            <button class="icon-btn" onclick="toggleNavPanel()" title="章节目录">
+                <span class="material-symbols-outlined" style="font-size: 18px;">menu</span>
+            </button>
+            <button class="icon-btn" onclick="toggleMeditation()" title="入定模式">
+                <span class="material-symbols-outlined" style="font-size: 18px;">self_improvement</span>
+            </button>
+            <button class="icon-btn" onclick="toggleThemePanel()" title="修行设置">
+                <span class="material-symbols-outlined" style="font-size: 18px;">tune</span>
+            </button>
+            <button class="icon-btn" onclick="toggleCollectionPanel()" title="我的">
+                <span class="material-symbols-outlined" style="font-size: 18px;">favorite</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="main-content">
+        <div class="chapter-container" id="chapterContainer">
+            <div class="chapter-content-horizontal" id="chapterContent">
+                道可道，非常道；名可名，非常名。<br/>
+                无名，天地之始；有名，万物之母。<br/>
+                故常无欲，以观其妙；常有欲，以观其徼。<br/>
+                此两者，同出而异名，同谓之玄。<br/>
+                玄之又玄，众妙之门。
+            </div>
+        </div>
+    </main>
+
+    <!-- 全屏按钮 -->
+    <button class="fullscreen-btn" onclick="toggleFullscreen()" title="全屏模式">
+        <span class="material-symbols-outlined">fullscreen</span>
+    </button>
+
+    <!-- 章节指示器 -->
+
+    <!-- 底部导航区 -->
+    <div class="bottom-section">
+        <button class="nav-btn" onclick="prevChapter()">
+            <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <div class="center-actions">
+            <button class="action-btn" id="collectBtn" onclick="toggleCollect()">
+                <span class="material-symbols-outlined">favorite</span>
+            </button>
+            <button class="action-btn orientation" id="orientationBtn" onclick="toggleOrientation()">
+                <span class="material-symbols-outlined">rotate_90_degrees_ccw</span>
+            </button>
+            <button class="action-btn" onclick="toggleInterpretation()">
+                <span class="material-symbols-outlined">visibility</span>
+            </button>
+        </div>
+        <button class="nav-btn" onclick="nextChapter()">
+            <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+    </div>
+
+    <!-- 底部视觉锚点 -->
+    <div class="bottom-anchor"></div>
+
+    <!-- 遮罩层 -->
+    <div class="overlay" id="overlay" onclick="closeAllPanels()"></div>
+
+    <!-- 主题面板 -->
+    <div class="theme-panel" id="themePanel">
+        <div class="panel-header">
+            <div class="panel-title">修行设置</div>
+            <button class="close-btn" onclick="closeAllPanels()">
+                <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+            </button>
+        </div>
+        <button class="upload-btn" onclick="toggleMeditation(); closeAllPanels()" style="width: 100%; margin-bottom: 20px; padding: 15px; border: 1px solid rgba(212, 175, 55, 0.3); background: rgba(212, 175, 55, 0.05); color: #d4af37; border-radius: 12px; letter-spacing: 2px;">
+            <span class="material-symbols-outlined">self_improvement</span>
+        进入入定模式
+        </button>
+        <div class="theme-grid">
+            <div class="theme-option active" data-scheme="default" onclick="setScheme('default')" title="经典水墨">墨</div>
+            <div class="theme-option" data-scheme="dark" onclick="setScheme('dark')" title="深邃夜空">夜</div>
+            <div class="theme-option" data-scheme="nature" onclick="setScheme('nature')" title="竹林清幽">竹</div>
+            <div class="theme-option" data-scheme="purple" onclick="setScheme('purple')" title="紫气东来">紫</div>
+            <div class="theme-option" data-scheme="ocean" onclick="setScheme('ocean')" title="沧海如水">海</div>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <button class="upload-btn" onclick="resetToDefault()" style="border-color: rgba(255,255,255,0.15);">
+                <span class="material-symbols-outlined">refresh</span>
+                重置为默认样式
+            </button>
+        </div>
+        <div class="custom-bg-section">
+            <div class="custom-bg-title">自定义背景</div>
+            <button class="upload-btn" onclick="uploadBackground()">
+                <span class="material-symbols-outlined">image</span>
+                上传背景图片
+            </button>
+            <input type="file" id="bgInput" accept="image/*" style="display: none;" onchange="handleBgUpload(event)">
+        </div>
+    </div>
+
+    <!-- 解读面板 -->
+    <div class="interpretation-panel" id="interpretationPanel">
+        <div class="panel-handle" onclick="toggleInterpretation()"></div>
+        <div class="interpretation-content">
+            <div class="interpretation-label">经文释义</div>
+            <div class="interpretation-text" id="interpretationText">
+                这是道德经的开篇，老子告诉我们：能用语言表达的道，就不是永恒的道；能用名字称呼的名，就不是永恒的名。意思是说，真正的真理和本质，往往超越了言语和定义的范围。
+            </div>
+            <div class="comments-section">
+                <div class="comments-header">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">forum</span>
+                    悟道留言
+                </div>
+                <div id="commentsList"></div>
+            </div>
+            <div class="comment-input-area">
+                <input class="comment-input" id="commentInput" placeholder="写下你的感悟，结个善缘..." type="text"/>
+                <button class="send-btn" onclick="sendComment()">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">send</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 收藏面板 - 重新设计为个人中心 -->
+    <div class="collection-panel" id="collectionPanel">
+        <div class="collection-header">
+            <div class="collection-title">我的</div>
+            <button class="close-btn" onclick="toggleCollectionPanel()">
+                <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+            </button>
+        </div>
+
+        <!-- 标签页导航 -->
+        <div class="profile-tabs">
+            <button class="profile-tab active" onclick="switchProfileTab('collections')">修道藏经</button>
+            <button class="profile-tab" onclick="switchProfileTab('comments')">我的留言</button>
+            <button class="profile-tab" onclick="switchProfileTab('replies')">历史回复</button>
+        </div>
+
+        <div class="collection-content">
+            <!-- 修道藏经标签页 -->
+            <div class="tab-content active" id="collectionsTab">
+                <div id="collectionContent"></div>
+            </div>
+
+            <!-- 我的留言标签页 -->
+            <div class="tab-content" id="commentsTab">
+                <div id="myCommentsContent"></div>
+            </div>
+
+            <!-- 历史回复标签页 -->
+            <div class="tab-content" id="repliesTab">
+                <div id="myRepliesContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 章节导航面板 -->
+    <div class="nav-panel" id="navPanel">
+        <div class="nav-header">
+            <div class="nav-title">八十一章</div>
+            <button class="close-btn" onclick="toggleNavPanel()" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: rgba(248, 246, 242, 0.8); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+            </button>
+        </div>
+        <div class="nav-search">
+            <input type="text" class="nav-search-input" id="navSearchInput" placeholder="搜索章节..." oninput="filterNavChapters(this.value)"/>
+        </div>
+        <div class="nav-content" id="navContent"></div>
+        <div class="nav-footer">
+            <div class="nav-progress" id="navProgress">阅读进度：1/81</div>
+        </div>
+    </div>
+
+    <script>
+        // 道德经81章数据
+        const chapters = [
+            { id: 1, title: "道可道", content: "道可道，非常道；名可名，非常名。无名，天地之始；有名，万物之母。故常无欲，以观其妙；常有欲，以观其徼。此两者，同出而异名，同谓之玄。玄之又玄，众妙之门。", interpretation: "这是道德经的开篇，老子告诉我们：能用语言表达的道，就不是永恒的道；能用名字称呼的名，就不是永恒的名。意思是说，真正的真理和本质，往往超越了言语和定义的范围。", likes: 256 },
+            { id: 2, title: "天下皆知美", content: "天下皆知美之为美，斯恶已；皆知善之为善，斯不善已。故有无相生，难易相成，长短相形，高下相倾，音声相和，前后相随。是以圣人处无为之事，行不言之教，万物作焉而不辞，生而不有，为而不恃，功成而弗居。夫唯弗居，是以不去。", interpretation: "老子在告诉我们一个深刻的道理：事物都是相对的。当我们定义了什么是美，就自然产生了什么是丑；知道了什么是善，也就有了不善的概念。", likes: 189 },
+            { id: 3, title: "不尚贤", content: "不尚贤，使民不争；不贵难得之货，使民不为盗；不见可欲，使民心不乱。是以圣人之治，虚其心，实其腹，弱其志，强其骨。常使民无知无欲，使夫智者不敢为也。为无为，则无不治。", interpretation: "这一章讲的是社会治理的智慧。老子认为，不过度推崇贤能，人们就不会争斗；不把稀有物品看得太珍贵，人们就不会去偷盗。", likes: 134 },
+            { id: 4, title: "道冲", content: "道冲，而用之或不盈。渊兮，似万物之宗。挫其锐，解其纷，和其光，同其尘。湛兮，似或存。吾不知谁之子，象帝之先。", interpretation: "道是空虚的，但作用却是无穷无尽的。它深邃得像万物的根源。挫其锐、解其纷、和其光、同其尘，这是内敛包容的智慧。", likes: 167 },
+            { id: 5, title: "天地不仁", content: "天地不仁，以万物为刍狗；圣人不仁，以百姓为刍狗。天地之间，其犹橐龠乎？虚而不屈，动而愈出。多言数穷，不如守中。", interpretation: "天地是公平的，不会偏袒任何一方，对万物一视同仁。这里的'不仁'不是不仁慈，而是超越了好恶情感的公平。", likes: 201 },
+            { id: 6, title: "谷神不死", content: "谷神不死，是谓玄牝。玄牝之门，是谓天地根。绵绵若存，用之不勤。", interpretation: "谷神象征着虚空而生生不息的力量，它是神秘的母性力量。老子用'玄牝'来形容这种创造力。", likes: 178 },
+            { id: 7, title: "天长地久", content: "天长地久。天地所以能长且久者，以其不自生，故能长生。是以圣人后其身而身先，外其身而身存。非以其无私邪？故能成其私。", interpretation: "天地之所以长久，是因为它们不为自己而生，所以能够长久存在。圣人把自己放在后面，反而能领先。", likes: 195 },
+            { id: 8, title: "上善若水", content: "上善若水。水善利万物而不争，处众人之所恶，故几于道。居善地，心善渊，与善仁，言善信，政善治，事善能，动善时。夫唯不争，故无尤。", interpretation: "最高尚的品格就像水一样。水滋润万物却不与万物争斗，愿意停留在众人厌恶的低洼之地，所以最接近于道。", likes: 289 },
+            { id: 9, title: "持而盈之", content: "持而盈之，不如其已；揣而锐之，不可长保。金玉满堂，莫之能守；富贵而骄，自遗其咎。功成身退，天之道。", interpretation: "手持盈满，不如适可而止；磨得锋芒太露，难以长久保持。金玉满堂，无人能守；富贵而骄横，自招灾祸。功成名就后急流勇退，这才符合天道。", likes: 156 },
+            { id: 10, title: "载营魄抱一", content: "载营魄抱一，能无离乎？专气致柔，能婴儿乎？涤除玄览，能无疵乎？爱民治国，能无为乎？天门开阖，能为雌乎？明白四达，能无知乎？生之畜之，生而不有，为而不恃，长而不宰，是谓玄德。", interpretation: "精神和形体合一，能不分离吗？结聚精气以致柔顺，能像婴儿一样吗？洗刷心智，能没有瑕疵吗？爱民治国，能无为而治吗？", likes: 143 }
+        ];
+
+        // 补充到81章（使用真实的章节标题）
+        const chapterTitles = [
+            "", "", "", "", "", "", "", "", "", "", // 占位前10章
+            "三十辐共一毂", "五色令人目盲", "宠辱若惊", "视之不见", "古之善为士者",
+            "致虚极", "太上", "大道废", "绝圣弃智", "唯之与阿",
+            "孔德之容", "曲则全", "希言自然", "企者不立", "有物混成",
+            "重为轻根", "善行无辙迹", "知其雄", "知人者", "大道泛兮",
+            "配天", "道法自然", "躁胜寒", "下流", "不德",
+            "得一", "上士闻道", "道生一", "至柔", "名与身",
+            "大成若缺", "知足不辱", "不出户", "为学日益", "圣人无心",
+            "出生入死", "道生之", "天下有始", "行于大道", "善抱",
+            "知者不言", "以正治国", "其政闷闷", "治人事天", "治大国",
+            "大国下流", "善贷", "报怨以德", "谦下", "知病",
+            "畏死", "无以生为", "坚强者", "天道", "不争",
+            "无死地", "勇不敢", "执兵", "被褐", "知病",
+            "不畏威", "心得", "敢为", "奇用兵", "守位",
+            "盗夸", "无积", "无为", "好静", "无事",
+            "为腹", "异端", "偏将军", "哀者", "知我者",
+            "自知", "不失其所", "死而不亡", "道生一", "无有人无间",
+            "若水", "柔弱", "报怨", "信道", "民不畏死",
+            "民之饥", "民之难治", "勇不敢", "知止", "方而不割",
+            "大制", "知足", "知足之足", "不胜", "为正"
+        ];
+
+        for (let i = 11; i <= 81; i++) {
+            chapters.push({
+                id: i,
+                title: chapterTitles[i] || `第${i}章`,
+                content: "道可道，非常道；名可名，非常名。",
+                interpretation: "这是" + (chapterTitles[i] || `第${i}章`) + "的解读...",
+                likes: Math.floor(Math.random() * 200) + 50
+            });
+        }
+
+        // 状态管理
+        let currentChapterIndex = 0;
+        let collectedChapters = new Set();
+        let chapterComments = {};
+        let textOrientation = 'horizontal'; // 'horizontal' or 'vertical'
+
+        // 初始化评论数据
+        chapters.forEach(chapter => {
+            chapterComments[chapter.id] = [];
+        });
+
+
+        // 更新章节显示，带3D翻转效果
+        function updateChapter(direction = 'next', animate = true) {
+            const chapter = chapters[currentChapterIndex];
+            const container = document.getElementById('chapterContainer');
+
+            if (animate) {
+                const outClass = direction === 'next' ? 'flip-out' : 'flip-in';
+                const inClass = direction === 'next' ? 'flip-in' : 'flip-out';
+
+                container.classList.add(outClass);
+
+                setTimeout(() => {
+                    renderChapterContent(chapter);
+                    container.classList.remove(outClass);
+                    container.classList.add(inClass);
+
+                    // 强制重绘
+                    void container.offsetWidth;
+
+                    container.classList.remove(inClass);
+                }, 300);
+            } else {
+                renderChapterContent(chapter);
+            }
+
+            updateActionButton('collectBtn', collectedChapters.has(chapter.id));
+            document.getElementById('interpretationText').textContent = chapter.interpretation;
+            renderComments();
+        }
+
+        function toChineseNumeral(n) {
+            const digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+            if (n < 10) return digits[n];
+            if (n === 10) return '十';
+            const tens = Math.floor(n / 10), ones = n % 10;
+            return (tens > 1 ? digits[tens] : '') + '十' + (ones ? digits[ones] : '');
+        }
+
+        function renderChapterContent(chapter) {
+            const contentDiv = document.getElementById('chapterContent');
+            // 将文本按句号分割并格式化为带标点的行
+            const sentences = chapter.content.split(/([。；])/);
+            let formattedText = '';
+            let currentLine = '';
+
+            for (let i = 0; i < sentences.length; i++) {
+                const part = sentences[i].trim();
+                if (part) {
+                    currentLine += part;
+                    // 如果是句号或分号，结束当前行
+                    if (part === '。' || part === '；') {
+                        formattedText += currentLine + '<br/>';
+                        currentLine = '';
+                    }
+                }
+            }
+            contentDiv.innerHTML = formattedText;
+        }
+
+        // 切换文字方向
+        function toggleOrientation() {
+            const contentDiv = document.getElementById('chapterContent');
+            const btn = document.getElementById('orientationBtn');
+
+            if (textOrientation === 'horizontal') {
+                textOrientation = 'vertical';
+                contentDiv.className = 'chapter-content-vertical';
+                btn.classList.add('active');
+            } else {
+                textOrientation = 'horizontal';
+                contentDiv.className = 'chapter-content-horizontal';
+                btn.classList.remove('active');
+            }
+
+            // 保存设置
+            localStorage.setItem('daoism-text-orientation', textOrientation);
+        }
+
+        function updateActionButton(btnId, isActive) {
+            const btn = document.getElementById(btnId);
+            if (isActive) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        // 切换全屏模式
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // 监听全屏状态变化
+        document.addEventListener('fullscreenchange', () => {
+            const btn = document.querySelector('.fullscreen-btn');
+            const icon = btn.querySelector('span');
+            if (document.fullscreenElement) {
+                document.body.classList.add('fullscreen-active');
+                icon.textContent = 'fullscreen_exit';
+            } else {
+                document.body.classList.remove('fullscreen-active');
+                icon.textContent = 'fullscreen';
+            }
+        });
+
+        // 上一章
+        function prevChapter() {
+            if (currentChapterIndex > 0) {
+                currentChapterIndex--;
+                updateChapter('prev');
+            }
+        }
+
+        // 下一章
+        function nextChapter() {
+            if (currentChapterIndex < chapters.length - 1) {
+                currentChapterIndex++;
+                updateChapter('next');
+            }
+        }
+
+        // 切换收藏
+        function toggleCollect() {
+            const chapter = chapters[currentChapterIndex];
+            const btn = document.getElementById('collectBtn');
+
+            if (collectedChapters.has(chapter.id)) {
+                collectedChapters.delete(chapter.id);
+                btn.classList.remove('active');
+            } else {
+                collectedChapters.add(chapter.id);
+                btn.classList.add('active', 'pulse');
+                setTimeout(() => btn.classList.remove('pulse'), 500);
+            }
+
+            saveState();
+            renderCollections();
+        }
+
+        // 入定模式
+        function toggleMeditation() {
+            document.body.classList.toggle('meditation-mode');
+        }
+
+        // 点击页面时显示按钮
+        document.addEventListener('click', (e) => {
+            const fullscreenBtn = document.querySelector('.fullscreen-btn');
+
+            // 入定模式
+            if (document.body.classList.contains('meditation-mode')) {
+                const exitBtn = document.querySelector('.meditation-exit');
+
+                // 如果点击的不是按钮本身
+                if (!e.target.closest('.meditation-exit') && !e.target.closest('.fullscreen-btn')) {
+                    if (exitBtn) exitBtn.classList.add('visible');
+                    if (fullscreenBtn) fullscreenBtn.classList.add('visible');
+
+                    // 2秒后隐藏按钮
+                    setTimeout(() => {
+                        if (exitBtn) exitBtn.classList.remove('visible');
+                        if (fullscreenBtn) fullscreenBtn.classList.remove('visible');
+                    }, 2000);
+                }
+            } else {
+                // 非入定模式，只显示全屏按钮
+                if (!e.target.closest('.fullscreen-btn') && !e.target.closest('.nav-btn') && !e.target.closest('.action-btn') && !e.target.closest('.icon-btn') && !e.target.closest('.theme-panel') && !e.target.closest('.interpretation-panel') && !e.target.closest('.collection-panel') && !e.target.closest('.nav-panel')) {
+                    if (fullscreenBtn) fullscreenBtn.classList.add('visible');
+
+                    // 2秒后隐藏按钮
+                    setTimeout(() => {
+                        if (fullscreenBtn) fullscreenBtn.classList.remove('visible');
+                    }, 2000);
+                }
+            }
+        });
+
+        // 渲染评论
+        function renderComments() {
+            const chapter = chapters[currentChapterIndex];
+            const comments = chapterComments[chapter.id] || [];
+            const container = document.getElementById('commentsList');
+
+            if (comments.length === 0) {
+                container.innerHTML = '<div style="text-align:center;opacity:0.3;padding:30px;font-size:13px;">空谷回音，虚位以待...</div>';
+                return;
+            }
+
+            container.innerHTML = comments.map((comment, commentIndex) => `
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <div class="comment-avatar">${comment.avatar}</div>
+                        <div class="comment-user">${comment.user}</div>
+                        <div class="comment-time">${comment.time}</div>
+                    </div>
+                    <div class="comment-text">${comment.text}</div>
+                    <div class="comment-actions">
+                        <button class="comment-action-btn ${comment.liked ? 'liked' : ''}" onclick="toggleLike(${chapter.id}, ${commentIndex})">
+                            <span class="material-symbols-outlined">${comment.liked ? 'favorite' : 'favorite_border'}</span>
+                            <span class="comment-likes">${comment.likes || 0}</span>
+                        </button>
+                        <button class="comment-action-btn" onclick="toggleReplyInput(${chapter.id}, ${commentIndex})">
+                            <span class="material-symbols-outlined">reply</span>
+                            回复
+                        </button>
+                    </div>
+                    <div class="reply-input-area" id="replyInput-${chapter.id}-${commentIndex}" style="display: none;">
+                        <input class="reply-input" id="replyText-${chapter.id}-${commentIndex}" placeholder="回复 ${comment.user}..." type="text"/>
+                        <button class="reply-send-btn" onclick="sendReply(${chapter.id}, ${commentIndex})">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">send</span>
+                        </button>
+                    </div>
+                    ${comment.replies && comment.replies.length > 0 ? `
+                        <button class="show-replies-btn" onclick="toggleReplies(${chapter.id}, ${commentIndex})" id="showRepliesBtn-${chapter.id}-${commentIndex}">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">expand_more</span>
+                            ${comment.replies.length} 条回复
+                        </button>
+                        <div class="replies-section" id="repliesSection-${chapter.id}-${commentIndex}" style="display: none;">
+                            ${comment.replies.map(reply => `
+                                <div class="reply-item">
+                                    <div class="reply-header">
+                                        <div class="reply-avatar">${reply.avatar}</div>
+                                        <div class="reply-user">
+                                            ${reply.replyTo ? '<span class="reply-to">回复</span> ' : ''}${reply.user}
+                                            ${reply.replyTo ? `<span class="reply-to">${reply.replyTo}</span>` : ''}
+                                        </div>
+                                        <div class="reply-time">${reply.time}</div>
+                                    </div>
+                                    <div class="reply-text">${reply.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // 切换点赞
+        function toggleLike(chapterId, commentIndex) {
+            const comment = chapterComments[chapterId][commentIndex];
+            comment.liked = !comment.liked;
+            comment.likes = (comment.likes || 0) + (comment.liked ? 1 : -1);
+            renderComments();
+            saveState();
+        }
+
+        // 切换回复输入框
+        function toggleReplyInput(chapterId, commentIndex) {
+            const inputArea = document.getElementById(`replyInput-${chapterId}-${commentIndex}`);
+            if (inputArea) {
+                const isHidden = inputArea.style.display === 'none';
+                inputArea.style.display = isHidden ? 'flex' : 'none';
+                if (isHidden) {
+                    const input = document.getElementById(`replyText-${chapterId}-${commentIndex}`);
+                    if (input) input.focus();
+                }
+            }
+        }
+
+        // 发送回复
+        function sendReply(chapterId, commentIndex) {
+            const input = document.getElementById(`replyText-${chapterId}-${commentIndex}`);
+            const text = input.value.trim();
+            if (!text) return;
+
+            const comment = chapterComments[chapterId][commentIndex];
+            const avatars = ['道', '德', '经', '无', '为', '悟', '玄'];
+
+            if (!comment.replies) comment.replies = [];
+            comment.replies.unshift({
+                user: "修道者",
+                avatar: avatars[Math.floor(Math.random() * avatars.length)],
+                text: text,
+                replyTo: comment.user,
+                time: "刚刚"
+            });
+
+            input.value = '';
+            renderComments();
+            saveState();
+        }
+
+        // 切换回复显示
+        function toggleReplies(chapterId, commentIndex) {
+            const repliesSection = document.getElementById(`repliesSection-${chapterId}-${commentIndex}`);
+            const btn = document.getElementById(`showRepliesBtn-${chapterId}-${commentIndex}`);
+
+            if (repliesSection && btn) {
+                const isHidden = repliesSection.style.display === 'none';
+                repliesSection.style.display = isHidden ? 'block' : 'none';
+                btn.querySelector('.material-symbols-outlined').textContent = isHidden ? 'expand_less' : 'expand_more';
+            }
+        }
+
+        // 发送评论
+        function sendComment() {
+            const input = document.getElementById('commentInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const chapter = chapters[currentChapterIndex];
+            const avatars = ['道', '德', '经', '无', '为', '悟', '玄'];
+            const newComment = {
+                user: "修道者",
+                avatar: avatars[Math.floor(Math.random() * avatars.length)],
+                text: text,
+                time: "刚刚",
+                likes: 0,
+                liked: false,
+                replies: []
+            };
+
+            if (!chapterComments[chapter.id]) chapterComments[chapter.id] = [];
+            chapterComments[chapter.id].unshift(newComment);
+
+            input.value = '';
+            renderComments();
+            saveState();
+        }
+
+        // 渲染收藏列表
+        function renderCollections() {
+            const container = document.getElementById('collectionContent');
+            const collected = chapters.filter(c => collectedChapters.has(c.id));
+
+            if (collected.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon material-symbols-outlined" style="font-size:48px;">auto_stories</div>
+                        <div>藏经阁空空如也</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = collected.map(chapter => `
+                <div class="collection-item" onclick="jumpToChapter(${chapter.id})">
+                    <div class="collection-item-number">第${String(chapter.id).padStart(2, '0')}章</div>
+                    <div class="collection-item-title">${chapter.title}</div>
+                    <div class="collection-item-preview">${chapter.content.substring(0, 35)}...</div>
+                </div>
+            `).join('');
+        }
+
+        // 跳转到指定章节
+        function jumpToChapter(id) {
+            const oldIndex = currentChapterIndex;
+            currentChapterIndex = chapters.findIndex(c => c.id === id);
+            updateChapter(currentChapterIndex > oldIndex ? 'next' : 'prev');
+            toggleCollectionPanel();
+        }
+
+        // 面板控制
+        function toggleThemePanel() {
+            const panel = document.getElementById('themePanel');
+            const overlay = document.getElementById('overlay');
+            const wasActive = panel.classList.contains('active');
+            closeAllPanels();
+            if (!wasActive) {
+                panel.classList.add('active');
+                overlay.classList.add('active');
+            }
+        }
+
+        function toggleInterpretation() {
+            const panel = document.getElementById('interpretationPanel');
+            const overlay = document.getElementById('overlay');
+            const wasActive = panel.classList.contains('active');
+            closeAllPanels();
+            if (!wasActive) {
+                panel.classList.add('active');
+                overlay.classList.add('active');
+            }
+        }
+
+        function toggleCollectionPanel() {
+            const panel = document.getElementById('collectionPanel');
+            panel.classList.toggle('active');
+            if (panel.classList.contains('active')) {
+                // 默认显示修道藏经标签页
+                renderCollections();
+                renderMyComments();
+                renderMyReplies();
+            }
+        }
+
+        // 切换个人中心标签页
+        function switchProfileTab(tabName) {
+            // 更新标签页按钮状态
+            document.querySelectorAll('.profile-tab').forEach((tab, index) => {
+                const tabNames = ['collections', 'comments', 'replies'];
+                tab.classList.toggle('active', tabNames[index] === tabName);
+            });
+
+            // 更新内容区域显示
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            const targetContent = document.getElementById(tabName + 'Tab');
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+
+            // 根据标签页渲染对应内容
+            if (tabName === 'collections') {
+                renderCollections();
+            } else if (tabName === 'comments') {
+                renderMyComments();
+            } else if (tabName === 'replies') {
+                renderMyReplies();
+            }
+        }
+
+        // 渲染我的留言
+        function renderMyComments() {
+            const container = document.getElementById('myCommentsContent');
+            const myComments = [];
+
+            // 收集用户的所有留言
+            for (let chapterId in chapterComments) {
+                const comments = chapterComments[chapterId];
+                comments.forEach((comment, index) => {
+                    if (comment.user === "修道者") {
+                        const chapter = chapters.find(c => c.id === parseInt(chapterId));
+                        myComments.push({
+                            chapter: chapter,
+                            comment: comment,
+                            chapterId: parseInt(chapterId),
+                            commentIndex: index
+                        });
+                    }
+                });
+            }
+
+            // 按时间倒序排列（最新的在前）
+            myComments.reverse();
+
+            if (myComments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon material-symbols-outlined">chat_bubble_outline</div>
+                        <div>暂无悟道留言</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = myComments.map(item => `
+                <div class="my-comment-item" onclick="jumpToChapter(${item.chapterId})">
+                    <div class="my-comment-chapter">第${item.chapterId}章 · ${item.chapter.title}</div>
+                    <div class="my-comment-text">${item.comment.text}</div>
+                    <div class="my-comment-meta">
+                        <div class="my-comment-likes">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">favorite</span>
+                            ${item.comment.likes || 0}
+                        </div>
+                        <div class="my-comment-replies">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">reply</span>
+                            ${item.comment.replies ? item.comment.replies.length : 0}
+                        </div>
+                        <div>${item.comment.time}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染历史回复
+        function renderMyReplies() {
+            const container = document.getElementById('myRepliesContent');
+            const myReplies = [];
+
+            // 收集用户的所有回复
+            for (let chapterId in chapterComments) {
+                const comments = chapterComments[chapterId];
+                const chapter = chapters.find(c => c.id === parseInt(chapterId));
+
+                comments.forEach((comment) => {
+                    if (comment.replies && comment.replies.length > 0) {
+                        comment.replies.forEach((reply) => {
+                            if (reply.user === "修道者") {
+                                myReplies.push({
+                                    chapter: chapter,
+                                    comment: comment,
+                                    reply: reply,
+                                    chapterId: parseInt(chapterId)
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            // 按时间倒序排列（最新的在前）
+            myReplies.reverse();
+
+            if (myReplies.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon material-symbols-outlined">reply_outline</div>
+                        <div>暂无历史回复</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = myReplies.map(item => `
+                <div class="reply-history-item" onclick="jumpToChapter(${item.chapterId})">
+                    <div class="reply-history-chapter">第${item.chapterId}章 · ${item.chapter.title}</div>
+                    <div class="reply-context">
+                        回复 <span class="reply-context-user">${item.comment.user}</span>：
+                        ${item.comment.text.substring(0, 30)}${item.comment.text.length > 30 ? '...' : ''}
+                    </div>
+                    <div class="reply-history-text">${item.reply.text}</div>
+                    <div class="reply-history-time">${item.reply.time}</div>
+                </div>
+            `).join('');
+        }
+
+        function toggleNavPanel() {
+            const panel = document.getElementById('navPanel');
+            panel.classList.toggle('active');
+            if (panel.classList.contains('active')) {
+                renderNavChapters();
+            }
+        }
+
+        function closeAllPanels() {
+            document.getElementById('themePanel').classList.remove('active');
+            document.getElementById('interpretationPanel').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        }
+
+        // 渲染导航面板章节列表
+        function renderNavChapters(filteredChapters = null) {
+            const container = document.getElementById('navContent');
+            const chaptersToRender = filteredChapters || chapters;
+
+            container.innerHTML = chaptersToRender.map(chapter => `
+                <div class="nav-chapter-item ${chapter.id === currentChapterIndex + 1 ? 'active' : ''}"
+                     onclick="jumpToChapterFromNav(${chapter.id})">
+                    <div class="nav-chapter-num">${chapter.id}</div>
+                    <div class="nav-chapter-title">${chapter.title}</div>
+                </div>
+            `).join('');
+
+            // 更新阅读进度
+            document.getElementById('navProgress').textContent = `阅读进度：${currentChapterIndex + 1}/81`;
+        }
+
+        // 从导航面板跳转到章节
+        function jumpToChapterFromNav(chapterId) {
+            const oldIndex = currentChapterIndex;
+            currentChapterIndex = chapters.findIndex(c => c.id === chapterId);
+            updateChapter(currentChapterIndex > oldIndex ? 'next' : 'prev');
+            toggleNavPanel();
+        }
+
+        // 过滤导航面板章节
+        function filterNavChapters(query) {
+            if (!query.trim()) {
+                renderNavChapters();
+                return;
+            }
+
+            const filtered = chapters.filter(chapter =>
+                chapter.title.toLowerCase().includes(query.toLowerCase()) ||
+                chapter.content.includes(query)
+            );
+            renderNavChapters(filtered);
+        }
+
+        // 主题切换
+        function setScheme(scheme, save = true) {
+            document.body.setAttribute('data-scheme', scheme);
+
+            // 重置背景为默认渐变
+            document.body.style.background = 'radial-gradient(ellipse at center, rgba(40,40,40,0.4) 0%, #0e0e0e 100%)';
+            document.body.style.backgroundImage = '';
+
+            // 更新主题选项状态
+            document.querySelectorAll('.theme-option').forEach(option => {
+                option.classList.remove('active');
+                if (option.dataset.scheme === scheme) {
+                    option.classList.add('active');
+                }
+            });
+
+            if (save) {
+                localStorage.setItem('daoism-scheme', scheme);
+                localStorage.removeItem('daoism-custom-bg');
+            }
+        }
+
+        // 重置为默认样式
+        function resetToDefault() {
+            document.body.style.background = 'radial-gradient(ellipse at center, rgba(40,40,40,0.4) 0%, #0e0e0e 100%)';
+            document.body.style.backgroundImage = '';
+            document.body.style.backgroundSize = '';
+            document.body.style.backgroundPosition = '';
+            document.body.style.backgroundAttachment = '';
+            document.body.removeAttribute('data-scheme');
+
+            // 重置主题选项状态
+            document.querySelectorAll('.theme-option').forEach(option => {
+                option.classList.remove('active');
+                if (option.dataset.scheme === 'default') {
+                    option.classList.add('active');
+                }
+            });
+
+            // 清除所有存储的设置
+            localStorage.removeItem('daoism-scheme');
+            localStorage.removeItem('daoism-custom-bg');
+        }
+
+        // 上传背景
+        function uploadBackground() {
+            document.getElementById('bgInput').click();
+        }
+
+        function handleBgUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const bgImage = `url(${e.target.result})`;
+                document.body.style.backgroundImage = bgImage;
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundPosition = 'center';
+                document.body.style.backgroundAttachment = 'fixed';
+                localStorage.setItem('daoism-custom-bg', bgImage);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 保存状态
+        function saveState() {
+            localStorage.setItem('daoism-collected', JSON.stringify([...collectedChapters]));
+            localStorage.setItem('daoism-comments', JSON.stringify(chapterComments));
+            localStorage.setItem('daoism-chapter-index', currentChapterIndex);
+        }
+
+        // 加载状态
+        function loadState() {
+            const savedCollected = localStorage.getItem('daoism-collected');
+            const savedComments = localStorage.getItem('daoism-comments');
+            const savedIndex = localStorage.getItem('daoism-chapter-index');
+            const savedScheme = localStorage.getItem('daoism-scheme');
+            const customBg = localStorage.getItem('daoism-custom-bg');
+            const savedOrientation = localStorage.getItem('daoism-text-orientation');
+
+            if (savedCollected) collectedChapters = new Set(JSON.parse(savedCollected));
+            if (savedComments) chapterComments = JSON.parse(savedComments);
+            if (savedIndex) currentChapterIndex = parseInt(savedIndex);
+            if (savedScheme) setScheme(savedScheme, false);
+            if (customBg) {
+                document.body.style.backgroundImage = customBg;
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundPosition = 'center';
+                document.body.style.backgroundAttachment = 'fixed';
+            }
+            if (savedOrientation) {
+                textOrientation = savedOrientation;
+                const contentDiv = document.getElementById('chapterContent');
+                const btn = document.getElementById('orientationBtn');
+                if (textOrientation === 'vertical') {
+                    contentDiv.className = 'chapter-content-vertical';
+                    btn.classList.add('active');
+                }
+            }
+        }
+
+        // 触摸滑动支持
+        let touchStartX = 0;
+        document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+        document.addEventListener('touchend', e => {
+            const diff = touchStartX - e.changedTouches[0].screenX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) nextChapter();
+                else prevChapter();
+            }
+        });
+
+        // 键盘支持
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft') prevChapter();
+            if (e.key === 'ArrowRight') nextChapter();
+            if (e.key === 'Escape') closeAllPanels();
+            if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+        });
+
+        // 初始化
+        loadState();
+        updateChapter('next', false);
+        renderNavChapters();
+    </script>
+</body>
+</html>

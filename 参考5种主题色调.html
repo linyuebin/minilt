@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>道德经 Mini 论坛 - 81章</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* 方案切换导航 */
+        .scheme-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            border-bottom: 1px solid #eee;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .scheme-btn {
+            padding: 8px 16px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .scheme-btn.active {
+            background: #333;
+            color: #fff;
+        }
+
+        .scheme-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 方案容器 */
+        .scheme-container {
+            display: none;
+            min-height: 100vh;
+            padding-top: 60px;
+        }
+
+        .scheme-container.active {
+            display: block;
+        }
+
+        /* ===== 方案1: 经典水墨风格 ===== */
+        .scheme-ink {
+            background: linear-gradient(180deg, #f8f6f2 0%, #e8e4dc 100%);
+            padding: 20px 15px;
+        }
+
+        .scheme-ink .header {
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        .scheme-ink .header::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(ellipse, rgba(0,0,0,0.05) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .scheme-ink .header h1 {
+            font-size: 32px;
+            font-weight: 300;
+            color: #2c2c2c;
+            letter-spacing: 8px;
+            margin-bottom: 10px;
+        }
+
+        .scheme-ink .header p {
+            font-size: 14px;
+            color: #666;
+            letter-spacing: 2px;
+        }
+
+        .scheme-ink .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .scheme-ink .card {
+            aspect-ratio: 1;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+
+        .scheme-ink .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 40%, rgba(0,0,0,0.02) 100%);
+            pointer-events: none;
+        }
+
+        .scheme-ink .card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        .scheme-ink .card-num {
+            font-size: 12px;
+            color: #999;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .scheme-ink .card-title {
+            font-size: 16px;
+            color: #2c2c2c;
+            text-align: center;
+            writing-mode: vertical-rl;
+            letter-spacing: 3px;
+            font-weight: 400;
+        }
+
+        .scheme-ink .card-preview {
+            font-size: 11px;
+            color: #888;
+            margin-top: 10px;
+            line-height: 1.6;
+            text-align: center;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .ink-seal {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            border: 2px solid #c44;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #c44;
+            opacity: 0.6;
+        }
+
+        /* ===== 方案2: 现代简约风格 ===== */
+        .scheme-modern {
+            background: #fff;
+            padding: 20px 15px;
+        }
+
+        .scheme-modern .header {
+            text-align: center;
+            padding: 30px 20px 40px;
+        }
+
+        .scheme-modern .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 8px;
+        }
+
+        .scheme-modern .header p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .scheme-modern .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .scheme-modern .card {
+            aspect-ratio: 1;
+            background: #f7f7f7;
+            border-radius: 12px;
+            padding: 15px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .scheme-modern .card:nth-child(3n+1) { background: #e8f4f8; }
+        .scheme-modern .card:nth-child(3n+2) { background: #f8f0e8; }
+        .scheme-modern .card:nth-child(3n+3) { background: #e8f0e8; }
+
+        .scheme-modern .card:hover {
+            transform: scale(1.08);
+            z-index: 10;
+        }
+
+        .scheme-modern .card-num {
+            font-size: 24px;
+            font-weight: 900;
+            color: rgba(0,0,0,0.15);
+            margin-bottom: 5px;
+        }
+
+        .scheme-modern .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .scheme-modern .card-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-top: 8px;
+        }
+
+        /* ===== 方案3: 星空流动风格 ===== */
+        .scheme-starry {
+            background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%);
+            padding: 20px 15px;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scheme-starry::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+                radial-gradient(2px 2px at 60px 70px, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 50px 50px, #fff, transparent),
+                radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.6), transparent),
+                radial-gradient(2px 2px at 90px 10px, #fff, transparent);
+            background-size: 200px 200px;
+            animation: twinkle 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .scheme-starry .header {
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .scheme-starry .header h1 {
+            font-size: 36px;
+            font-weight: 200;
+            color: #fff;
+            letter-spacing: 6px;
+            text-shadow: 0 0 30px rgba(255,255,255,0.5);
+            margin-bottom: 15px;
+        }
+
+        .scheme-starry .header p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 4px;
+        }
+
+        .scheme-starry .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .scheme-starry .card {
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s;
+            cursor: pointer;
+        }
+
+        .scheme-starry .card:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.3);
+            box-shadow: 0 0 30px rgba(255,255,255,0.2), inset 0 0 30px rgba(255,255,255,0.05);
+            transform: scale(1.05);
+        }
+
+        .scheme-starry .card-num {
+            font-size: 28px;
+            font-weight: 100;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 5px;
+        }
+
+        .scheme-starry .card-title {
+            font-size: 12px;
+            color: rgba(255,255,255,0.9);
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .scheme-starry .card-glow {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 6px;
+            height: 6px;
+            background: #4af;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #4af, 0 0 20px #4af;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        /* ===== 方案4: 玉石质感风格 ===== */
+        .scheme-jade {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%, #a5d6a7 100%);
+            padding: 20px 15px;
+        }
+
+        .scheme-jade .header {
+            text-align: center;
+            padding: 35px 20px;
+        }
+
+        .scheme-jade .header h1 {
+            font-size: 32px;
+            font-weight: 400;
+            color: #2e5c2e;
+            letter-spacing: 6px;
+            margin-bottom: 10px;
+        }
+
+        .scheme-jade .header p {
+            font-size: 14px;
+            color: #4a7c4a;
+            letter-spacing: 2px;
+        }
+
+        .scheme-jade .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .scheme-jade .card {
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.6);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow:
+                0 8px 32px rgba(46, 92, 46, 0.1),
+                inset 0 1px 0 rgba(255,255,255,0.8);
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scheme-jade .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255,255,255,0.3) 50%,
+                transparent 70%
+            );
+            transform: rotate(45deg);
+            transition: all 0.6s;
+            opacity: 0;
+        }
+
+        .scheme-jade .card:hover::before {
+            opacity: 1;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        .scheme-jade .card:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow:
+                0 15px 40px rgba(46, 92, 46, 0.2),
+                inset 0 1px 0 rgba(255,255,255,0.9);
+        }
+
+        .scheme-jade .card-num {
+            font-size: 16px;
+            color: #5a8a5a;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .scheme-jade .card-title {
+            font-size: 15px;
+            color: #1a3a1a;
+            text-align: center;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        .scheme-jade .jade-pattern {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 25px;
+            height: 25px;
+            opacity: 0.3;
+        }
+
+        /* ===== 方案5: 渐变幻彩风格 ===== */
+        .scheme-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            padding: 20px 15px;
+            min-height: 100vh;
+        }
+
+        .scheme-gradient .header {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .scheme-gradient .header h1 {
+            font-size: 34px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, #ffd1ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+        }
+
+        .scheme-gradient .header p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            letter-spacing: 2px;
+        }
+
+        .scheme-gradient .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .scheme-gradient .card {
+            aspect-ratio: 1;
+            border-radius: 24px;
+            padding: 18px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scheme-gradient .card:nth-child(9n+1) { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .scheme-gradient .card:nth-child(9n+2) { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .scheme-gradient .card:nth-child(9n+3) { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .scheme-gradient .card:nth-child(9n+4) { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .scheme-gradient .card:nth-child(9n+5) { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .scheme-gradient .card:nth-child(9n+6) { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+        .scheme-gradient .card:nth-child(9n+7) { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+        .scheme-gradient .card:nth-child(9n+8) { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
+        .scheme-gradient .card:nth-child(9n+9) { background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%); }
+
+        .scheme-gradient .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .scheme-gradient .card:hover {
+            transform: translateY(-8px) scale(1.1) rotate(2deg);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .scheme-gradient .card-num {
+            font-size: 32px;
+            font-weight: 900;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 5px;
+        }
+
+        .scheme-gradient .card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            line-height: 1.3;
+        }
+
+        .scheme-gradient .card-emoji {
+            font-size: 20px;
+            margin-top: 8px;
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .scheme-starry .footer {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .scheme-gradient .footer {
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 380px) {
+            .scheme-modern .cards-grid,
+            .scheme-starry .cards-grid,
+            .scheme-gradient .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* 加载动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: fadeInUp 0.6s ease backwards;
+        }
+
+        .card:nth-child(1) { animation-delay: 0.05s; }
+        .card:nth-child(2) { animation-delay: 0.1s; }
+        .card:nth-child(3) { animation-delay: 0.15s; }
+        .card:nth-child(4) { animation-delay: 0.2s; }
+        .card:nth-child(5) { animation-delay: 0.25s; }
+        .card:nth-child(6) { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+    <!-- 方案切换导航 -->
+    <nav class="scheme-nav">
+        <button class="scheme-btn active" onclick="switchScheme(1)">水墨经典</button>
+        <button class="scheme-btn" onclick="switchScheme(2)">现代简约</button>
+        <button class="scheme-btn" onclick="switchScheme(3)">星空流动</button>
+        <button class="scheme-btn" onclick="switchScheme(4)">玉石质感</button>
+        <button class="scheme-btn" onclick="switchScheme(5)">渐变幻彩</button>
+    </nav>
+
+    <!-- 方案1: 经典水墨风格 -->
+    <div class="scheme-container scheme-ink active" id="scheme1">
+        <header class="header">
+            <h1>道德經</h1>
+            <p>八十一章 · 玄之又玄 · 众妙之门</p>
+        </header>
+        <div class="cards-grid" id="ink-grid"></div>
+        <footer class="footer">道可道，非常道</footer>
+    </div>
+
+    <!-- 方案2: 现代简约风格 -->
+    <div class="scheme-container scheme-modern" id="scheme2">
+        <header class="header">
+            <h1>Tao Te Ching</h1>
+            <p>道德经 · 81章智慧</p>
+        </header>
+        <div class="cards-grid" id="modern-grid"></div>
+        <footer class="footer">名可名，非常名</footer>
+    </div>
+
+    <!-- 方案3: 星空流动风格 -->
+    <div class="scheme-container scheme-starry" id="scheme3">
+        <header class="header">
+            <h1>道德經</h1>
+            <p>仰望星空 · 问道苍穹</p>
+        </header>
+        <div class="cards-grid" id="starry-grid"></div>
+        <footer class="footer">天地不仁，以万物为刍狗</footer>
+    </div>
+
+    <!-- 方案4: 玉石质感风格 -->
+    <div class="scheme-container scheme-jade" id="scheme4">
+        <header class="header">
+            <h1>道德經</h1>
+            <p>温润如玉 · 道法自然</p>
+        </header>
+        <div class="cards-grid" id="jade-grid"></div>
+        <footer class="footer">上善若水</footer>
+    </div>
+
+    <!-- 方案5: 渐变幻彩风格 -->
+    <div class="scheme-container scheme-gradient" id="scheme5">
+        <header class="header">
+            <h1>道德经</h1>
+            <p>古今智慧 · 缤纷呈现</p>
+        </header>
+        <div class="cards-grid" id="gradient-grid"></div>
+        <footer class="footer">道生一，一生二，二生三，三生万物</footer>
+    </div>
+
+    <script>
+        // 道德经81章章节数据
+        const chapters = [
+            {num: 1, title: "道可道", preview: "道可道，非常道；名可名，非常名。无名天地之始，有名万物之母。"},
+            {num: 2, title: "天下皆知", preview: "天下皆知美之为美，斯恶已；皆知善之为善，斯不善已。"},
+            {num: 3, title: "不尚贤", preview: "不尚贤，使民不争；不贵难得之货，使民不为盗。"},
+            {num: 4, title: "道冲", preview: "道冲而用之或不盈，渊兮似万物之宗。"},
+            {num: 5, title: "天地不仁", preview: "天地不仁，以万物为刍狗；圣人不仁，以百姓为刍狗。"},
+            {num: 6, title: "谷神不死", preview: "谷神不死，是谓玄牝。玄牝之门，是谓天地根。"},
+            {num: 7, title: "天长地久", preview: "天长地久。天地所以能长且久者，以其不自生，故能长生。"},
+            {num: 8, title: "上善若水", preview: "上善若水。水善利万物而不争，处众人之所恶，故几于道。"},
+            {num: 9, title: "持而盈之", preview: "持而盈之，不如其已；揣而锐之，不可长保。"},
+            {num: 10, title: "载营魄", preview: "载营魄抱一，能无离乎？专气致柔，能婴儿乎？"},
+            {num: 11, title: "三十辐", preview: "三十辐共一毂，当其无，有车之用。"},
+            {num: 12, title: "五色", preview: "五色令人目盲，五音令人耳聋，五味令人口爽。"},
+            {num: 13, title: "宠辱", preview: "宠辱若惊，贵大患若身。何谓宠辱若惊？"},
+            {num: 14, title: "视之不见", preview: "视之不见名曰夷，听之不闻名曰希，搏之不得名曰微。"},
+            {num: 15, title: "古之善", preview: "古之善为士者，微妙玄通，深不可识。"},
+            {num: 16, title: "致虚极", preview: "致虚极，守静笃。万物并作，吾以观复。"},
+            {num: 17, title: "太上", preview: "太上，不知有之；其次，亲而誉之；其次，畏之。"},
+            {num: 18, title: "大道废", preview: "大道废，有仁义；智慧出，有大伪。"},
+            {num: 19, title: "绝圣", preview: "绝圣弃智，民利百倍；绝仁弃义，民复孝慈。"},
+            {num: 20, title: "唯之与阿", preview: "唯之与阿，相去几何？善之与恶，相去若何？"},
+            {num: 21, title: "孔德", preview: "孔德之容，惟道是从。道之为物，惟恍惟惚。"},
+            {num: 22, title: "曲则全", preview: "曲则全，枉则直，洼则盈，敝则新，少则得，多则惑。"},
+            {num: 23, title: "希言", preview: "希言自然。故飘风不终朝，骤雨不终日。"},
+            {num: 24, title: "企者", preview: "企者不立，跨者不行，自见者不明，自是者不彰。"},
+            {num: 25, title: "有物混成", preview: "有物混成，先天地生。寂兮寥兮，独立而不改。"},
+            {num: 26, title: "重为轻", preview: "重为轻根，静为躁君。是以圣人终日不离辎重。"},
+            {num: 27, title: "善行", preview: "善行无辙迹，善言无瑕谪，善数不用筹策。"},
+            {num: 28, title: "知其雄", preview: "知其雄，守其雌，为天下溪。为天下溪，常德不离。"},
+            {num: 29, title: "将欲取", preview: "将欲取天下而为之，吾见其不得已。"},
+            {num: 30, title: "以道佐", preview: "以道佐人主者，不以兵强天下。其事好还。"},
+            {num: 31, title: "夫佳兵", preview: "夫佳兵者，不祥之器。物或恶之，故有道者不处。"},
+            {num: 32, title: "道常无名", preview: "道常无名。朴虽小，天下莫能臣。"},
+            {num: 33, title: "知人者", preview: "知人者智，自知者明。胜人者有力，自胜者强。"},
+            {num: 34, title: "大道泛兮", preview: "大道泛兮，其可左右。万物恃之以生而不辞。"},
+            {num: 35, title: "执大象", preview: "执大象，天下往。往而不害，安平泰。"},
+            {num: 36, title: "将欲歙之", preview: "将欲歙之，必固张之；将欲弱之，必固强之。"},
+            {num: 37, title: "道常无为", preview: "道常无为而无不为。侯王若能守之，万物将自化。"},
+            {num: 38, title: "上德不德", preview: "上德不德，是以有德；下德不失德，是以无德。"},
+            {num: 39, title: "昔之得一", preview: "昔之得一者：天得一以清，地得一以宁。"},
+            {num: 40, title: "反者", preview: "反者道之动，弱者道之用。天下万物生于有，有生于无。"},
+            {num: 41, title: "上士闻道", preview: "上士闻道，勤而行之；中士闻道，若存若亡；下士闻道，大笑之。"},
+            {num: 42, title: "道生一", preview: "道生一，一生二，二生三，三生万物。"},
+            {num: 43, title: "天下之至柔", preview: "天下之至柔，驰骋天下之至坚。无有入无间。"},
+            {num: 44, title: "名与身", preview: "名与身孰亲？身与货孰多？得与亡孰病？"},
+            {num: 45, title: "大成", preview: "大成若缺，其用不弊。大盈若冲，其用不穷。"},
+            {num: 46, title: "天下有道", preview: "天下有道，却走马以粪；天下无道，戎马生于郊。"},
+            {num: 47, title: "不出户", preview: "不出户，知天下；不窥牖，见天道。"},
+            {num: 48, title: "为学日益", preview: "为学日益，为道日损。损之又损，以至于无为。"},
+            {num: 49, title: "圣人无常", preview: "圣人无常心，以百姓心为心。"},
+            {num: 50, title: "出生入死", preview: "出生入死。生之徒，十有三；死之徒，十有三。"},
+            {num: 51, title: "道生之", preview: "道生之，德畜之，物形之，势成之。"},
+            {num: 52, title: "天下有始", preview: "天下有始，以为天下母。既得其母，以知其子。"},
+            {num: 53, title: "使我介然", preview: "使我介然有知，行于大道，唯施是畏。"},
+            {num: 54, title: "善建者", preview: "善建者不拔，善抱者不脱，子孙以祭祀不辍。"},
+            {num: 55, title: "含德", preview: "含德之厚，比于赤子。毒虫不螫，猛兽不据。"},
+            {num: 56, title: "知者不言", preview: "知者不言，言者不知。塞其兑，闭其门。"},
+            {num: 57, title: "以正治国", preview: "以正治国，以奇用兵，以无事取天下。"},
+            {num: 58, title: "其政闷闷", preview: "其政闷闷，其民淳淳；其政察察，其民缺缺。"},
+            {num: 59, title: "治人事天", preview: "治人事天，莫若啬。夫唯啬，是谓早服。"},
+            {num: 60, title: "治大国", preview: "治大国，若烹小鲜。以道莅天下，其鬼不神。"},
+            {num: 61, title: "大国者", preview: "大国者下流，天下之交，天下之牝。"},
+            {num: 62, title: "道者", preview: "道者万物之奥。善人之宝，不善人之所保。"},
+            {num: 63, title: "为无为", preview: "为无为，事无事，味无味。大小多少，报怨以德。"},
+            {num: 64, title: "其安易持", preview: "其安易持，其未兆易谋。其脆易泮，其微易散。"},
+            {num: 65, title: "古之善", preview: "古之善为道者，非以明民，将以愚之。"},
+            {num: 66, title: "江海", preview: "江海所以能为百谷王者，以其善下之。"},
+            {num: 67, title: "天下皆谓", preview: "天下皆谓我道大，似不肖。夫唯大，故似不肖。"},
+            {num: 68, title: "善为士", preview: "善为士者不武，善战者不怒，善胜敌者不与。"},
+            {num: 69, title: "用兵有言", preview: "用兵有言：吾不敢为主，而为客。"},
+            {num: 70, title: "吾言甚易", preview: "吾言甚易知，甚易行。天下莫能知，莫能行。"},
+            {num: 71, title: "知不知", preview: "知不知，上；不知知，病。夫唯病病，是以不病。"},
+            {num: 72, title: "民不畏威", preview: "民不畏威，则大威至。无狭其所居，无厌其所生。"},
+            {num: 73, title: "勇于敢", preview: "勇于敢则杀，勇于不敢则活。此两者，或利或害。"},
+            {num: 74, title: "民不畏死", preview: "民不畏死，奈何以死惧之？若使民常畏死。"},
+            {num: 75, title: "民之饥", preview: "民之饥，以其上食税之多，是以饥。"},
+            {num: 76, title: "人之生", preview: "人之生也柔弱，其死也坚强。草木之生也柔脆。"},
+            {num: 77, title: "天之道", preview: "天之道，其犹张弓与？高者抑之，下者举之。"},
+            {num: 78, title: "天下莫柔", preview: "天下莫柔弱于水，而攻坚强者莫之能胜。"},
+            {num: 79, title: "和大怨", preview: "和大怨，必有余怨，安可以为善？"},
+            {num: 80, title: "小国寡民", preview: "小国寡民。使有什伯之器而不用，使民重死而不远徙。"},
+            {num: 81, title: "信言不美", preview: "信言不美，美言不信。善者不辩，辩者不善。"}
+        ];
+
+        // 表情符号数组
+        const emojis = ['☯️', '🌊', '🌀', '🌙', '⛰️', '🌸', '🍃', '💧', '🔥', '🌟'];
+
+        // 生成卡片HTML
+        function generateCards(scheme) {
+            let html = '';
+            chapters.forEach((chapter, index) => {
+                switch(scheme) {
+                    case 'ink':
+                        html += `
+                            <div class="card" onclick="openChapter(${chapter.num})">
+                                <div class="card-num">第${chapter.num}章</div>
+                                <div class="card-title">${chapter.title}</div>
+                                <div class="card-preview">${chapter.preview.substring(0, 20)}...</div>
+                                <div class="ink-seal">道</div>
+                            </div>
+                        `;
+                        break;
+                    case 'modern':
+                        html += `
+                            <div class="card" onclick="openChapter(${chapter.num})">
+                                <div class="card-num">${chapter.num}</div>
+                                <div class="card-title">${chapter.title}</div>
+                                <div class="card-icon">📖</div>
+                            </div>
+                        `;
+                        break;
+                    case 'starry':
+                        html += `
+                            <div class="card" onclick="openChapter(${chapter.num})">
+                                <div class="card-glow"></div>
+                                <div class="card-num">${chapter.num}</div>
+                                <div class="card-title">${chapter.title}</div>
+                            </div>
+                        `;
+                        break;
+                    case 'jade':
+                        html += `
+                            <div class="card" onclick="openChapter(${chapter.num})">
+                                <div class="card-num">第${chapter.num}章</div>
+                                <div class="card-title">${chapter.title}</div>
+                                <svg class="jade-pattern" viewBox="0 0 24 24" fill="currentColor">
+                                    <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1"/>
+                                    <circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.3"/>
+                                </svg>
+                            </div>
+                        `;
+                        break;
+                    case 'gradient':
+                        html += `
+                            <div class="card" onclick="openChapter(${chapter.num})">
+                                <div class="card-num">${chapter.num}</div>
+                                <div class="card-title">${chapter.title}</div>
+                                <div class="card-emoji">${emojis[index % emojis.length]}</div>
+                            </div>
+                        `;
+                        break;
+                }
+            });
+            return html;
+        }
+
+        // 初始化所有方案
+        document.getElementById('ink-grid').innerHTML = generateCards('ink');
+        document.getElementById('modern-grid').innerHTML = generateCards('modern');
+        document.getElementById('starry-grid').innerHTML = generateCards('starry');
+        document.getElementById('jade-grid').innerHTML = generateCards('jade');
+        document.getElementById('gradient-grid').innerHTML = generateCards('gradient');
+
+        // 切换方案
+        function switchScheme(num) {
+            // 隐藏所有方案
+            document.querySelectorAll('.scheme-container').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // 显示选中方案
+            document.getElementById('scheme' + num).classList.add('active');
+
+            // 更新按钮状态
+            document.querySelectorAll('.scheme-btn').forEach((btn, index) => {
+                btn.classList.toggle('active', index === num - 1);
+            });
+
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 打开章节详情
+        function openChapter(num) {
+            const chapter = chapters.find(c => c.num === num);
+            alert(`第${chapter.num}章：${chapter.title}\n\n${chapter.preview}`);
+        }
+    </script>
+</body>
+</html>
