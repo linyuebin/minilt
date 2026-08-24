@@ -927,18 +927,22 @@
             right: 0;
             bottom: 0;
             z-index: 180;
-            transform: translateX(100%);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
+            transform: scale(0.95);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            background: rgba(14, 14, 14, 0.95);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
+            background: rgba(14, 14, 14, 0.98);
+            backdrop-filter: blur(35px);
+            -webkit-backdrop-filter: blur(35px);
         }
 
         .collection-panel.active {
-            transform: translateX(0);
+            transform: scale(1);
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .collection-header {
@@ -946,7 +950,6 @@
             justify-content: space-between;
             align-items: center;
             padding: 30px 25px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
             flex-shrink: 0;
         }
 
@@ -957,43 +960,359 @@
             letter-spacing: 2px;
         }
 
-        /* 标签页导航 */
-        .profile-tabs {
+        .profile-content-wrapper {
+            flex: 1;
             display: flex;
-            padding: 0 25px;
+            flex-direction: column;
+            gap: 32px;
+            padding: 0 24px;
+            position: relative;
+        }
+
+        /* 个人资料部分 */
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        .profile-avatar-wrapper {
+            position: relative;
+        }
+
+        .profile-avatar-new {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 0.5px solid rgba(212, 175, 55, 0.5);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px;
+            background: rgba(42, 42, 42, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .profile-avatar-new:active {
+            transform: scale(0.95);
+        }
+
+        .profile-avatar-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(26, 26, 26, 1);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-avatar-inner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.9;
+            filter: grayscale(20%);
+        }
+
+        .profile-avatar-inner .material-symbols-outlined {
+            font-size: 36px;
+            color: #d4af37;
+        }
+
+        .profile-info-new {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .profile-name-new {
+            font-size: 22px;
+            color: rgba(229, 226, 225, 1);
+            letter-spacing: 0.1em;
+            margin-top: 8px;
+        }
+
+        .profile-status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 999px;
+            padding: 6px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .profile-status-badge .material-symbols-outlined {
+            font-size: 14px;
+            color: #d4af37;
+        }
+
+        .profile-status-text {
+            font-size: 12px;
+            letter-spacing: 0.02em;
+            color: rgba(226, 226, 226, 1);
+            font-weight: 500;
+        }
+
+        /* 横向菜单 */
+        .horizontal-menu-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .horizontal-menu-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            height: 72px;
+        }
+
+        .menu-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 8px;
+            background: rgba(26, 26, 26, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .menu-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .menu-card .material-symbols-outlined {
+            font-size: 18px;
+            color: rgba(226, 226, 226, 1);
+            transition: color 0.3s ease;
+        }
+
+        .menu-card:hover .material-symbols-outlined {
+            color: #d4af37;
+        }
+
+        .menu-card-text {
+            font-size: 12px;
+            letter-spacing: 0.02em;
+            color: rgba(226, 226, 226, 1);
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .menu-card:hover .menu-card-text {
+            color: rgba(229, 226, 225, 1);
+        }
+
+        /* 列表菜单项 */
+        .list-menu-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .list-menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            height: 72px;
+            background: rgba(26, 26, 26, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .list-menu-item-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .list-menu-item .material-symbols-outlined {
+            font-size: 24px;
+            color: rgba(226, 226, 226, 1);
+            transition: color 0.3s ease;
+        }
+
+        .list-menu-item:hover .material-symbols-outlined {
+            color: #d4af37;
+        }
+
+        .list-menu-text {
+            font-size: 15px;
+            color: rgba(226, 226, 226, 1);
+            letter-spacing: 0.1em;
+            transition: color 0.3s ease;
+        }
+
+        .list-menu-item:hover .list-menu-text {
+            color: rgba(229, 226, 225, 1);
+        }
+
+        .list-menu-arrow {
+            color: rgba(226, 226, 226, 0.5);
+            font-size: 18px;
+            transition: color 0.3s ease;
+        }
+
+        .list-menu-item:hover .list-menu-arrow {
+            color: rgba(226, 226, 226, 1);
+        }
+
+        /* 底部工具 */
+        .footer-utilities {
+            margin-top: 48px;
+            padding-top: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        .footer-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: rgba(226, 226, 226, 0.7);
+            transition: color 0.3s ease;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .footer-link:hover {
+            color: rgba(229, 226, 225, 1);
+        }
+
+        .footer-link-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .footer-link .material-symbols-outlined {
+            font-size: 20px;
+        }
+
+        .footer-link-text {
+            font-size: 14px;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-link-arrow {
+            font-size: 16px;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer-link:hover .footer-link-arrow {
+            opacity: 1;
+        }
+
+        /* 背景光晕 */
+        .ambient-glow {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 256px;
+            height: 256px;
+            background: rgba(212, 175, 55, 0.05);
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 子面板通用样式 */
+        .sub-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 190;
+            transform: translateX(100%);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: rgba(14, 14, 14, 0.98);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+        }
+
+        .sub-panel.active {
+            transform: translateX(0);
+        }
+
+        .sub-panel-header {
+            display: flex;
+            align-items: center;
+            padding: 30px 25px 20px;
             border-bottom: 1px solid rgba(255,255,255,0.06);
             flex-shrink: 0;
         }
 
-        .profile-tab {
-            padding: 15px 20px;
-            background: none;
-            border: none;
-            color: rgba(255,255,255,0.5);
-            font-size: 15px;
+        .sub-panel-back {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: rgba(248, 246, 242, 0.8);
             cursor: pointer;
-            position: relative;
-            transition: all 0.3s ease;
+            margin-right: 16px;
         }
 
-        .profile-tab.active {
+        .sub-panel-title {
+            font-size: 18px;
+            font-weight: 500;
             color: #d4af37;
+            letter-spacing: 1px;
+            flex: 1;
         }
 
-        .profile-tab::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #d4af37;
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-
-        .profile-tab.active::after {
-            transform: scaleX(1);
+        .sub-panel-content {
+            flex: 1;
+            padding: 20px 25px;
+            overflow-y: auto;
         }
 
         .collection-content {
@@ -1130,7 +1449,6 @@
         .reply-history-time {
             font-size: 12px;
             color: rgba(255,255,255,0.4);
-        }
         }
 
         .empty-state {
@@ -1304,11 +1622,8 @@
             <button class="icon-btn" onclick="toggleMeditation()" title="入定模式">
                 <span class="material-symbols-outlined" style="font-size: 18px;">self_improvement</span>
             </button>
-            <button class="icon-btn" onclick="toggleThemePanel()" title="修行设置">
-                <span class="material-symbols-outlined" style="font-size: 18px;">tune</span>
-            </button>
             <button class="icon-btn" onclick="toggleCollectionPanel()" title="我的">
-                <span class="material-symbols-outlined" style="font-size: 18px;">favorite</span>
+                <span class="material-symbols-outlined" style="font-size: 18px;">person</span>
             </button>
         </div>
     </header>
@@ -1422,33 +1737,144 @@
     <!-- 收藏面板 - 重新设计为个人中心 -->
     <div class="collection-panel" id="collectionPanel">
         <div class="collection-header">
-            <div class="collection-title">我的</div>
             <button class="close-btn" onclick="toggleCollectionPanel()">
                 <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
             </button>
         </div>
 
-        <!-- 标签页导航 -->
-        <div class="profile-tabs">
-            <button class="profile-tab active" onclick="switchProfileTab('collections')">修道藏经</button>
-            <button class="profile-tab" onclick="switchProfileTab('comments')">我的留言</button>
-            <button class="profile-tab" onclick="switchProfileTab('replies')">历史回复</button>
+        <div class="profile-content-wrapper">
+            <!-- 个人资料部分 -->
+            <section class="profile-section">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar-new">
+                        <div class="profile-avatar-inner">
+                            <img alt="用户头像" src="user.png"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-info-new">
+                    <h2 class="profile-name-new">修道者</h2>
+                    <div class="profile-status-badge">
+                        <span class="material-symbols-outlined">spa</span>
+                        <span class="profile-status-text" id="profileStatusText">修行进度：第一章 · 悟道中</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 横向菜单 -->
+            <section class="horizontal-menu-section">
+                <div class="horizontal-menu-row">
+                    <a class="menu-card" href="#" onclick="openSubPanel('comments'); return false;">
+                        <span class="material-symbols-outlined">chat_bubble</span>
+                        <span class="menu-card-text">感悟</span>
+                    </a>
+                    <a class="menu-card" href="#" onclick="openSubPanel('likes'); return false;">
+                        <span class="material-symbols-outlined">thumb_up</span>
+                        <span class="menu-card-text">点赞</span>
+                    </a>
+                    <a class="menu-card" href="#" onclick="openSubPanel('replies'); return false;">
+                        <span class="material-symbols-outlined">history</span>
+                        <span class="menu-card-text">互动</span>
+                    </a>
+                </div>
+
+                <!-- 列表菜单 -->
+                <a class="list-menu-item" href="#" onclick="openSubPanel('collections'); return false;">
+                    <div class="list-menu-item-left">
+                        <span class="material-symbols-outlined">auto_stories</span>
+                        <span class="list-menu-text">修道藏经</span>
+                    </div>
+                    <span class="material-symbols-outlined list-menu-arrow">arrow_forward_ios</span>
+                </a>
+
+                <a class="list-menu-item" href="#" onclick="openSubPanel('friends'); return false;">
+                    <div class="list-menu-item-left">
+                        <span class="material-symbols-outlined">group</span>
+                        <span class="list-menu-text">道友圈</span>
+                    </div>
+                    <span class="material-symbols-outlined list-menu-arrow">arrow_forward_ios</span>
+                </a>
+            </section>
+
+            <!-- 底部工具 -->
+            <section class="footer-utilities">
+                <a class="footer-link" href="#" onclick="toggleThemePanel(); toggleCollectionPanel(); return false;">
+                    <div class="footer-link-left">
+                        <span class="material-symbols-outlined">settings</span>
+                        <span class="footer-link-text">修行设置与隐私</span>
+                    </div>
+                    <span class="material-symbols-outlined footer-link-arrow">chevron_right</span>
+                </a>
+                <a class="footer-link" href="#">
+                    <div class="footer-link-left">
+                        <span class="material-symbols-outlined">help</span>
+                        <span class="footer-link-text">道法指引</span>
+                    </div>
+                    <span class="material-symbols-outlined footer-link-arrow">chevron_right</span>
+                </a>
+            </section>
+
+            <!-- 背景光晕 -->
+            <div class="ambient-glow"></div>
         </div>
+    </div>
 
-        <div class="collection-content">
-            <!-- 修道藏经标签页 -->
-            <div class="tab-content active" id="collectionsTab">
-                <div id="collectionContent"></div>
-            </div>
+    <!-- 子面板：修道藏经 -->
+    <div class="sub-panel" id="collectionsSubPanel">
+        <div class="sub-panel-header">
+            <button class="sub-panel-back" onclick="closeSubPanel('collections')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span>
+            </button>
+            <div class="sub-panel-title">修道藏经</div>
+        </div>
+        <div class="sub-panel-content" id="collectionContent"></div>
+    </div>
 
-            <!-- 我的留言标签页 -->
-            <div class="tab-content" id="commentsTab">
-                <div id="myCommentsContent"></div>
-            </div>
+    <!-- 子面板：我的留言 -->
+    <div class="sub-panel" id="commentsSubPanel">
+        <div class="sub-panel-header">
+            <button class="sub-panel-back" onclick="closeSubPanel('comments')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span>
+            </button>
+            <div class="sub-panel-title">我的留言</div>
+        </div>
+        <div class="sub-panel-content" id="myCommentsContent"></div>
+    </div>
 
-            <!-- 历史回复标签页 -->
-            <div class="tab-content" id="repliesTab">
-                <div id="myRepliesContent"></div>
+    <!-- 子面板：点赞 -->
+    <div class="sub-panel" id="likesSubPanel">
+        <div class="sub-panel-header">
+            <button class="sub-panel-back" onclick="closeSubPanel('likes')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span>
+            </button>
+            <div class="sub-panel-title">我的点赞</div>
+        </div>
+        <div class="sub-panel-content" id="myLikesContent"></div>
+    </div>
+
+    <!-- 子面板：历史回复 -->
+    <div class="sub-panel" id="repliesSubPanel">
+        <div class="sub-panel-header">
+            <button class="sub-panel-back" onclick="closeSubPanel('replies')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span>
+            </button>
+            <div class="sub-panel-title">历史回复</div>
+        </div>
+        <div class="sub-panel-content" id="myRepliesContent"></div>
+    </div>
+
+    <!-- 子面板：道友圈 -->
+    <div class="sub-panel" id="friendsSubPanel">
+        <div class="sub-panel-header">
+            <button class="sub-panel-back" onclick="closeSubPanel('friends')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span>
+            </button>
+            <div class="sub-panel-title">道友圈</div>
+        </div>
+        <div class="sub-panel-content">
+            <div class="empty-state">
+                <div class="empty-state-icon material-symbols-outlined">group_off</div>
+                <div>道友圈功能开发中</div>
             </div>
         </div>
     </div>
@@ -1558,6 +1984,10 @@
 
             updateActionButton('collectBtn', collectedChapters.has(chapter.id));
             document.getElementById('interpretationText').textContent = chapter.interpretation;
+
+            // 更新个人中心的进度文字
+            document.getElementById('profileStatusText').textContent = `修行进度：第${chapter.id}章`;
+
             renderComments();
         }
 
@@ -1674,6 +2104,7 @@
 
             saveState();
             renderCollections();
+            updateProfileStats();
         }
 
         // 入定模式
@@ -1734,7 +2165,7 @@
                     <div class="comment-text">${comment.text}</div>
                     <div class="comment-actions">
                         <button class="comment-action-btn ${comment.liked ? 'liked' : ''}" onclick="toggleLike(${chapter.id}, ${commentIndex})">
-                            <span class="material-symbols-outlined">${comment.liked ? 'favorite' : 'favorite_border'}</span>
+                            <span class="material-symbols-outlined">${comment.liked ? 'thumb_up' : 'thumb_up_off'}</span>
                             <span class="comment-likes">${comment.likes || 0}</span>
                         </button>
                         <button class="comment-action-btn" onclick="toggleReplyInput(${chapter.id}, ${commentIndex})">
@@ -1779,6 +2210,7 @@
             comment.liked = !comment.liked;
             comment.likes = (comment.likes || 0) + (comment.liked ? 1 : -1);
             renderComments();
+            updateProfileStats();
             saveState();
         }
 
@@ -1815,6 +2247,7 @@
 
             input.value = '';
             renderComments();
+            updateProfileStats();
             saveState();
         }
 
@@ -1853,10 +2286,9 @@
 
             input.value = '';
             renderComments();
+            updateProfileStats();
             saveState();
         }
-
-        // 渲染收藏列表
         function renderCollections() {
             const container = document.getElementById('collectionContent');
             const collected = chapters.filter(c => collectedChapters.has(c.id));
@@ -1885,7 +2317,10 @@
             const oldIndex = currentChapterIndex;
             currentChapterIndex = chapters.findIndex(c => c.id === id);
             updateChapter(currentChapterIndex > oldIndex ? 'next' : 'prev');
-            toggleCollectionPanel();
+
+            // 关闭所有面板
+            document.querySelectorAll('.sub-panel').forEach(panel => panel.classList.remove('active'));
+            document.getElementById('collectionPanel').classList.remove('active');
         }
 
         // 面板控制
@@ -1913,41 +2348,101 @@
 
         function toggleCollectionPanel() {
             const panel = document.getElementById('collectionPanel');
-            panel.classList.toggle('active');
-            if (panel.classList.contains('active')) {
-                // 默认显示修道藏经标签页
-                renderCollections();
-                renderMyComments();
-                renderMyReplies();
+            if (!panel.classList.contains('active')) {
+                updateProfileStats();
             }
+            panel.classList.toggle('active');
         }
 
-        // 切换个人中心标签页
-        function switchProfileTab(tabName) {
-            // 更新标签页按钮状态
-            document.querySelectorAll('.profile-tab').forEach((tab, index) => {
-                const tabNames = ['collections', 'comments', 'replies'];
-                tab.classList.toggle('active', tabNames[index] === tabName);
-            });
-
-            // 更新内容区域显示
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-
-            const targetContent = document.getElementById(tabName + 'Tab');
-            if (targetContent) {
-                targetContent.classList.add('active');
-            }
-
-            // 根据标签页渲染对应内容
-            if (tabName === 'collections') {
+        // 子面板控制
+        function openSubPanel(type) {
+            if (type === 'collections') {
                 renderCollections();
-            } else if (tabName === 'comments') {
+            } else if (type === 'comments') {
                 renderMyComments();
-            } else if (tabName === 'replies') {
+            } else if (type === 'replies') {
                 renderMyReplies();
             }
+            document.getElementById(type + 'SubPanel').classList.add('active');
+        }
+
+        function closeSubPanel(type) {
+            document.getElementById(type + 'SubPanel').classList.remove('active');
+        }
+
+        // 更新个人中心统计数据
+        function updateProfileStats() {
+            const currentChapter = chapters[currentChapterIndex];
+            const progress = Math.round((currentChapter.id / 81) * 100);
+            document.getElementById('profileStatusText').textContent = `修行进度：第${currentChapter.id}章 · ${progress < 30 ? '初悟' : progress < 60 ? '修行中' : progress < 90 ? '近道' : '悟道'}中`;
+
+            let myCommentCount = 0;
+            let myReplyCount = 0;
+            let myLikesCount = 0;
+
+            for (let chapterId in chapterComments) {
+                const comments = chapterComments[chapterId];
+                comments.forEach((comment) => {
+                    if (comment.user === "修道者") {
+                        myCommentCount++;
+                    }
+                    if (comment.replies) {
+                        comment.replies.forEach((reply) => {
+                            if (reply.user === "修道者") {
+                                myReplyCount++;
+                            }
+                        });
+                    }
+                });
+            }
+
+            // 渲染点赞列表
+            renderMyLikes();
+        }
+
+        // 渲染我的点赞
+        function renderMyLikes() {
+            const container = document.getElementById('myLikesContent');
+            const myLikes = [];
+
+            // 收集用户点赞的评论
+            for (let chapterId in chapterComments) {
+                const comments = chapterComments[chapterId];
+                const chapter = chapters.find(c => c.id === parseInt(chapterId));
+
+                comments.forEach((comment) => {
+                    if (comment.liked && comment.user !== "修道者") {
+                        myLikes.push({
+                            chapter: chapter,
+                            comment: comment,
+                            chapterId: parseInt(chapterId)
+                        });
+                    }
+                });
+            }
+
+            myLikes.reverse();
+
+            if (myLikes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon material-symbols-outlined">thumb_up_off</div>
+                        <div>暂无点赞记录</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = myLikes.map(item => `
+                <div class="my-comment-item" onclick="jumpToChapter(${item.chapterId})">
+                    <div class="my-comment-chapter">第${item.chapterId}章 · ${item.chapter.title}</div>
+                    <div class="my-comment-text">${item.comment.text}</div>
+                    <div class="my-comment-meta">
+                        <div>${item.comment.user}</div>
+                        <div>${item.comment.time}</div>
+                    </div>
+                </div>
+            `).join('');
         }
 
         // 渲染我的留言
@@ -1990,7 +2485,7 @@
                     <div class="my-comment-text">${item.comment.text}</div>
                     <div class="my-comment-meta">
                         <div class="my-comment-likes">
-                            <span class="material-symbols-outlined" style="font-size: 14px;">favorite</span>
+                            <span class="material-symbols-outlined" style="font-size: 14px;">thumb_up</span>
                             ${item.comment.likes || 0}
                         </div>
                         <div class="my-comment-replies">
@@ -2067,6 +2562,7 @@
             document.getElementById('themePanel').classList.remove('active');
             document.getElementById('interpretationPanel').classList.remove('active');
             document.getElementById('overlay').classList.remove('active');
+            document.querySelectorAll('.sub-panel').forEach(panel => panel.classList.remove('active'));
         }
 
         // 渲染导航面板章节列表
@@ -2208,6 +2704,8 @@
                     btn.classList.add('active');
                 }
             }
+
+            updateProfileStats();
         }
 
         // 触摸滑动支持
