@@ -4,20 +4,29 @@
       <text class="page-title">历史回复</text>
     </view>
 
-    <scroll-view scroll-y class="replies-list" @scrolltolower="loadMore">
+    <scroll-view scroll-y class="replies-list">
       <view v-if="replies.length === 0 && !loading" class="empty-state">
-        <text class="empty-icon">↩️</text>
+        <text class="material-symbols-outlined empty-glyph">forum</text>
         <text class="empty-text">暂无回复</text>
+        <text class="empty-tip">回复道友的留言会出现在这里</text>
       </view>
 
       <view
         v-for="item in replies"
         :key="item.id"
         class="reply-item"
+        @click="jumpToChapter(item.chapterId)"
       >
         <view class="reply-chapter">
           <text class="chapter-tag">第{{ item.chapterId }}章</text>
           <text class="chapter-title">{{ item.chapterTitle }}</text>
+          <text class="material-symbols-outlined item-arrow">chevron_right</text>
+        </view>
+
+        <!-- 引用原留言，形成对话上下文 -->
+        <view class="quote-box">
+          <text class="quote-label">回复 @{{ item.targetNickname }}</text>
+          <text class="quote-text">{{ item.targetContent }}</text>
         </view>
 
         <view class="reply-content">
@@ -42,26 +51,12 @@ import { getMyReplies } from '@/api'
 
 const replies = ref([])
 const loading = ref(false)
-const page = ref(1)
-const hasMore = ref(true)
 
+// 后端直接返回回复列表数组（不分页）
 const loadReplies = async () => {
-  if (loading.value || !hasMore.value) return
-
   loading.value = true
   try {
-    const result = await getMyReplies({
-      page: page.value,
-      size: 20
-    })
-
-    if (page.value === 1) {
-      replies.value = result.records || []
-    } else {
-      replies.value.push(...(result.records || []))
-    }
-
-    hasMore.value = result.records?.length === 20
+    replies.value = (await getMyReplies()) || []
   } catch (error) {
     console.error('加载回复失败:', error)
   } finally {
@@ -69,16 +64,16 @@ const loadReplies = async () => {
   }
 }
 
-const loadMore = () => {
-  if (hasMore.value && !loading.value) {
-    page.value++
-    loadReplies()
-  }
-}
-
 onMounted(() => {
   loadReplies()
 })
+
+// 跳转到对应章节查看对话上下文
+const jumpToChapter = (chapterId) => {
+  uni.navigateTo({
+    url: `/pages/reading/index?chapterId=${chapterId}`
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -107,9 +102,10 @@ onMounted(() => {
   text-align: center;
   padding: 150rpx 0;
 
-  .empty-icon {
+  .empty-glyph {
     display: block;
     font-size: 80rpx;
+    color: rgba(212, 175, 55, 0.4);
     margin-bottom: 30rpx;
   }
 
@@ -117,6 +113,13 @@ onMounted(() => {
     display: block;
     font-size: 32rpx;
     color: #666;
+    margin-bottom: 20rpx;
+  }
+
+  .empty-tip {
+    display: block;
+    font-size: 28rpx;
+    color: #444;
   }
 }
 
@@ -144,6 +147,35 @@ onMounted(() => {
     .chapter-title {
       font-size: 28rpx;
       color: #888;
+    }
+
+    .item-arrow {
+      margin-left: auto;
+      font-size: 28rpx;
+      color: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  // 引用的原留言
+  .quote-box {
+    padding: 16rpx 20rpx;
+    margin-bottom: 20rpx;
+    background: rgba(255, 255, 255, 0.04);
+    border-left: 4rpx solid rgba(212, 175, 55, 0.4);
+    border-radius: 8rpx;
+
+    .quote-label {
+      display: block;
+      font-size: 24rpx;
+      color: rgba(212, 175, 55, 0.7);
+      margin-bottom: 8rpx;
+    }
+
+    .quote-text {
+      display: block;
+      font-size: 26rpx;
+      color: #888;
+      line-height: 1.5;
     }
   }
 

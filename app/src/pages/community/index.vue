@@ -4,7 +4,7 @@
     <view class="header">
       <view class="header-title">
         <text class="title">道友</text>
-        <text class="subtitle">同修共进</text>
+        <text class="subtitle">同修智慧，共悟大道</text>
       </view>
     </view>
 
@@ -24,10 +24,6 @@
 
       <!-- 道友感悟 -->
       <view v-else class="insights-section">
-        <view class="section-header">
-          <text class="section-title">道友感悟</text>
-          <text class="section-subtitle">同修智慧，共悟大道</text>
-        </view>
 
         <view v-if="insights.length === 0" class="empty-state">
           <view class="empty-icon">
@@ -328,26 +324,6 @@ onMounted(async () => {
 
 .insights-section {
   animation: slide-up 0.6s ease-out;
-}
-
-.section-header {
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.section-title {
-  font-size: 18px;
-  color: #d4af37;
-  letter-spacing: 4px;
-  margin-bottom: 8px;
-  display: block;
-}
-
-.section-subtitle {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 2px;
-  display: block;
 }
 
 .insight-list {

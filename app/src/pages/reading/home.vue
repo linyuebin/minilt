@@ -50,25 +50,6 @@
           </view>
         </view>
       </view>
-
-      <!-- 章节速览 -->
-      <view class="chapters-section">
-        <view class="section-header">
-          <text class="section-title">章节速览</text>
-          <text class="section-more" @click="showAllChapters">全部</text>
-        </view>
-        <scroll-view class="chapters-list" scroll-x>
-          <view
-            v-for="chapter in previewChapters"
-            :key="chapter.id"
-            class="chapter-preview-item"
-            @click="jumpToChapter(chapter.id)"
-          >
-            <view class="chapter-num">{{ chapter.id }}</view>
-            <view class="chapter-name">{{ chapter.title }}</view>
-          </view>
-        </scroll-view>
-      </view>
     </view>
 
     <!-- 底部装饰 -->
@@ -88,9 +69,6 @@ const allChapters = ref([])
 const currentChapter = ref(1)
 const isLoading = ref(true)
 const loadError = ref('')
-
-// 预览章节（前10章）
-const previewChapters = computed(() => allChapters.value.slice(0, 10))
 
 // 进度百分比
 const progressPercent = computed(() => {
@@ -122,22 +100,6 @@ const loadChapters = async () => {
 const startReading = () => {
   uni.navigateTo({
     url: '/pages/reading/index'
-  })
-}
-
-// 跳转到指定章节
-const jumpToChapter = (chapterId) => {
-  uni.navigateTo({
-    url: `/pages/reading/index?chapterId=${chapterId}`
-  })
-}
-
-// 显示全部章节
-const showAllChapters = () => {
-  // 可以跳转到章节列表页面
-  uni.showToast({
-    title: '开始阅读后可查看全部章节',
-    icon: 'none'
   })
 }
 
@@ -385,65 +347,6 @@ const retryLoad = () => {
   background: linear-gradient(90deg, #d4af37 0%, #f4cf67 100%);
   border-radius: 3px;
   transition: width 0.6s ease;
-}
-
-.chapters-section {
-  animation: slide-up 0.6s ease-out 0.6s backwards;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.section-title {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.7);
-  letter-spacing: 2px;
-}
-
-.section-more {
-  font-size: 14px;
-  color: #d4af37;
-  cursor: pointer;
-}
-
-.chapters-list {
-  white-space: nowrap;
-  padding: 5px 0;
-}
-
-.chapter-preview-item {
-  display: inline-block;
-  width: 80px;
-  text-align: center;
-  padding: 15px 10px;
-  margin-right: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.chapter-preview-item:active {
-  background: rgba(212, 175, 55, 0.1);
-  border-color: rgba(212, 175, 55, 0.3);
-}
-
-.chapter-num {
-  font-size: 18px;
-  color: #d4af37;
-  margin-bottom: 8px;
-}
-
-.chapter-name {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
-  white-space: normal;
-  letter-spacing: 1px;
 }
 
 .home-footer {

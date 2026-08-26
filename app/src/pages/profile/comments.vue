@@ -4,9 +4,9 @@
       <text class="page-title">我的留言</text>
     </view>
 
-    <scroll-view scroll-y class="comments-list" @scrolltolower="loadMore">
+    <scroll-view scroll-y class="comments-list">
       <view v-if="comments.length === 0 && !loading" class="empty-state">
-        <text class="empty-icon">💬</text>
+        <text class="material-symbols-outlined empty-glyph">chat_bubble</text>
         <text class="empty-text">暂无留言</text>
         <text class="empty-tip">去阅读页面分享你的感悟吧</text>
       </view>
@@ -15,10 +15,12 @@
         v-for="comment in comments"
         :key="comment.id"
         class="comment-item"
+        @click="jumpToChapter(comment.chapterId)"
       >
         <view class="comment-chapter">
           <text class="chapter-tag">第{{ comment.chapterId }}章</text>
           <text class="chapter-title">{{ comment.chapterTitle }}</text>
+          <text class="material-symbols-outlined item-arrow">chevron_right</text>
         </view>
 
         <view class="comment-content">
@@ -28,7 +30,8 @@
         <view class="comment-meta">
           <view class="meta-left">
             <text class="comment-time">{{ comment.createdAt }}</text>
-            <text class="comment-likes">❤️ {{ comment.likeCount }}</text>
+            <text class="comment-replies">{{ comment.replyCount || 0 }} 条回复</text>
+            <text class="comment-likes">{{ comment.likeCount }} 赞</text>
           </view>
         </view>
       </view>
@@ -46,26 +49,12 @@ import { getMyComments } from '@/api'
 
 const comments = ref([])
 const loading = ref(false)
-const page = ref(1)
-const hasMore = ref(true)
 
+// 后端直接返回留言数组（不分页）
 const loadComments = async () => {
-  if (loading.value || !hasMore.value) return
-
   loading.value = true
   try {
-    const result = await getMyComments({
-      page: page.value,
-      size: 20
-    })
-
-    if (page.value === 1) {
-      comments.value = result.records || []
-    } else {
-      comments.value.push(...(result.records || []))
-    }
-
-    hasMore.value = result.records?.length === 20
+    comments.value = (await getMyComments()) || []
   } catch (error) {
     console.error('加载留言失败:', error)
   } finally {
@@ -73,16 +62,16 @@ const loadComments = async () => {
   }
 }
 
-const loadMore = () => {
-  if (hasMore.value && !loading.value) {
-    page.value++
-    loadComments()
-  }
-}
-
 onMounted(() => {
   loadComments()
 })
+
+// 跳转到对应章节继续交流
+const jumpToChapter = (chapterId) => {
+  uni.navigateTo({
+    url: `/pages/reading/index?chapterId=${chapterId}`
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -111,9 +100,10 @@ onMounted(() => {
   text-align: center;
   padding: 150rpx 0;
 
-  .empty-icon {
+  .empty-glyph {
     display: block;
     font-size: 80rpx;
+    color: rgba(212, 175, 55, 0.4);
     margin-bottom: 30rpx;
   }
 
@@ -156,6 +146,12 @@ onMounted(() => {
       font-size: 28rpx;
       color: #888;
     }
+
+    .item-arrow {
+      margin-left: auto;
+      font-size: 28rpx;
+      color: rgba(255, 255, 255, 0.3);
+    }
   }
 
   .comment-content {
@@ -179,9 +175,14 @@ onMounted(() => {
         color: #666;
       }
 
+      .comment-replies,
       .comment-likes {
         font-size: 24rpx;
         color: #888;
+      }
+
+      .comment-replies {
+        color: rgba(212, 175, 55, 0.7);
       }
     }
   }

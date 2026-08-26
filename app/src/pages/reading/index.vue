@@ -1,5 +1,10 @@
 <template>
-  <view class="reading-container">
+  <view
+    class="reading-container"
+    :class="{ 'is-zen': zenMode }"
+    @touchstart="handleTouchStart"
+    @touchend="handleTouchEnd"
+  >
     <!-- 加载状态 -->
     <view v-if="isLoading" class="page-loading">
       <view class="loading-spinner"></view>
@@ -17,81 +22,65 @@
 
     <!-- 正常内容 -->
     <template v-else>
-    <!-- 退出入定模式按钮 -->
-    <view v-if="zenMode" class="meditation-exit" @click="toggleZenMode">
-      <text>退出入定</text>
-    </view>
-
-    <!-- 顶部导航 -->
-    <view class="header">
-      <view class="header-title">
-        <view class="logo">道德经</view>
-      </view>
-      <view class="header-icons">
-        <view class="icon-btn" @click="toggleChapterDrawer" title="章节目录">
-          <text class="material-symbols-outlined">menu</text>
+      <!-- 顶部导航：返回 + 第X章 -->
+      <view class="header">
+        <view class="header-side">
+          <view class="icon-btn" @click.stop="goBackHome" title="返回首页">
+            <text class="material-symbols-outlined">arrow_back</text>
+          </view>
         </view>
-        <view class="icon-btn" @click="toggleZenMode" title="入定模式">
-          <text class="material-symbols-outlined">self_improvement</text>
-        </view>
-        <view class="icon-btn" @click="navigateToProfile" title="我的">
-          <text class="material-symbols-outlined">person</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 主要内容 -->
-    <view class="main-content">
-      <view class="chapter-container" id="chapterContainer">
-        <view class="chapter-header">
+        <view class="header-center">
           <view class="chapter-num">第{{ currentChapter.id }}章</view>
           <view class="chapter-divider"></view>
         </view>
-        <view
-          class="chapter-text"
-          :class="isHorizontal ? 'chapter-content-horizontal' : 'chapter-content-vertical'"
-        >
-          <text class="text-line" v-for="(line, index) in displayLines" :key="index">
-            {{ line }}
-          </text>
-        </view>
+        <view class="header-side header-side-right"></view>
       </view>
-    </view>
 
-    <!-- 底部导航区 - 已迁移到自定义tabBar，保留隐藏以防兼容性问题 -->
-    <view class="bottom-section" style="display: none;">
-      <view class="nav-btn" @click="prevChapter">
-        <text class="material-symbols-outlined">chevron_left</text>
-      </view>
-      <view class="center-actions">
-        <view
-          class="action-btn"
-          :class="{ 'active': currentChapter.favorited }"
-          @click="toggleFavorite"
-        >
-          <text class="material-symbols-outlined">favorite</text>
-        </view>
-        <view
-          class="action-btn orientation"
-          :class="{ 'active': !isHorizontal }"
-          @click="toggleOrientation"
-        >
-          <text class="material-symbols-outlined">rotate_90_degrees_ccw</text>
-        </view>
-        <view class="action-btn" @click="toggleInterpretation">
-          <text class="material-symbols-outlined">visibility</text>
-        </view>
-        <view class="action-btn" @click="toggleComments">
-          <text class="material-symbols-outlined">chat_bubble</text>
+      <!-- 主要内容：屏幕中间显示经文 -->
+      <view class="main-content">
+        <view class="chapter-container" id="chapterContainer">
+          <view
+            class="chapter-text"
+            :class="isHorizontal ? 'chapter-content-horizontal' : 'chapter-content-vertical'"
+          >
+            <text class="text-line" v-for="(line, index) in displayLines" :key="index">
+              {{ line }}
+            </text>
+          </view>
         </view>
       </view>
-      <view class="nav-btn" @click="nextChapter">
-        <text class="material-symbols-outlined">chevron_right</text>
+
+      <!-- 入定模式：底部上划提示 -->
+      <view v-if="zenMode" class="zen-swipe-hint" @click.stop="exitZenMode">
+        <text class="material-symbols-outlined zen-hint-icon">keyboard_double_arrow_up</text>
+        <text class="zen-hint-text">上划退出入定</text>
       </view>
-    </view>
+
+      <!-- 底部工具栏：左下目录 / 中间横竖排 / 右下释义，入定模式下收起 -->
+      <view class="bottom-toolbar" :class="{ 'toolbar-hidden': zenMode }">
+        <view class="toolbar-side">
+          <view class="action-btn" @click.stop="toggleChapterDrawer">
+            <text class="material-symbols-outlined">menu</text>
+          </view>
+        </view>
+        <view class="toolbar-center">
+          <view
+            class="action-btn"
+            :class="{ 'active': !isHorizontal }"
+            @click.stop="toggleOrientation"
+          >
+            <text class="material-symbols-outlined">rotate_90_degrees_ccw</text>
+          </view>
+        </view>
+        <view class="toolbar-side toolbar-side-right">
+          <view class="action-btn" @click.stop="toggleInterpretation">
+            <text class="material-symbols-outlined">visibility</text>
+          </view>
+        </view>
+      </view>
 
     <!-- 遮罩层 -->
-    <view class="overlay" :class="{ 'active': showChapterDrawer || showInterpretation || showComments || showSettings }" @click="closeAllPanels"></view>
+    <view class="overlay" :class="{ 'active': showChapterDrawer || showInterpretation || showSettings }" @click="closeAllPanels"></view>
 
     <!-- 章节导航面板 -->
     <view class="nav-panel" :class="{ 'active': showChapterDrawer }">
@@ -126,106 +115,108 @@
       </view>
     </view>
 
-    <!-- 解读面板 -->
+    <!-- 解读面板：释义 + 悟道留言同面板滚动（参考原型交互） -->
     <view class="interpretation-panel" :class="{ 'active': showInterpretation }">
       <view class="panel-handle" @click="toggleInterpretation"></view>
-      <view class="interpretation-content">
-        <view class="interpretation-label">经文释义</view>
-        <view class="interpretation-text">
-          {{ currentChapter.interpretation }}
-        </view>
-        <view class="comments-section">
-          <view class="comments-header">
-            <text class="icon" style="font-size: 18px;">forum</text>
-            <text>悟道留言</text>
-          </view>
-        </view>
-      </view>
-    </view>
 
-    <!-- 评论面板 -->
-    <view class="comments-panel" :class="{ 'active': showComments }">
-      <view class="panel-handle" @click="toggleComments"></view>
-      <view class="panel-header">
-        <view class="panel-title">悟道留言</view>
-        <view class="panel-close" @click="toggleComments">
-          <text class="material-symbols-outlined">close</text>
-        </view>
-      </view>
-
-      <!-- 评论列表 -->
-      <scroll-view class="comments-list" scroll-y>
-        <view v-if="comments.length === 0" class="no-comments">
-          <text>空谷回音，虚位以待...</text>
-        </view>
-        <view
-          v-for="comment in comments"
-          :key="comment.id"
-          class="comment-item"
-        >
-          <view class="comment-header">
-            <view class="comment-avatar">{{ getAvatar(comment.nickname) }}</view>
-            <view class="comment-user">{{ comment.nickname }}</view>
-            <view class="comment-time">{{ shortTime(comment.createdAt) }}</view>
+      <scroll-view class="panel-scroll" scroll-y>
+        <view class="panel-inner">
+          <view class="interpretation-label">经文释义</view>
+          <view class="interpretation-text">
+            {{ currentChapter.interpretation }}
           </view>
-          <view class="comment-text">{{ comment.content }}</view>
-          <view class="comment-actions">
+
+          <!-- 悟道留言区 -->
+          <view class="comments-section">
+            <view class="comments-header">
+              <text class="material-symbols-outlined comments-icon">forum</text>
+              <text>悟道留言</text>
+            </view>
+
+            <view v-if="comments.length === 0" class="no-comments">
+              <text>空谷回音，虚位以待...</text>
+            </view>
+
             <view
-              class="comment-action-btn"
-              :class="{ 'liked': comment.liked }"
-              @click="handleCommentLike(comment)"
+              v-for="comment in comments"
+              :key="comment.id"
+              class="comment-item"
             >
-              <text class="material-symbols-outlined">{{ comment.liked ? 'thumb_up' : 'thumb_up_off' }}</text>
-              <text class="comment-likes">{{ comment.likeCount || 0 }}</text>
-            </view>
-            <view class="comment-action-btn" @click="startReply(comment)">
-              <text class="material-symbols-outlined">reply</text>
-              <text>回复</text>
-            </view>
-          </view>
-
-          <!-- 嵌套回复 -->
-          <view v-if="comment.replies && comment.replies.length" class="replies-section">
-            <view v-for="reply in comment.replies" :key="reply.id" class="reply-item">
-              <view class="reply-header">
-                <view class="reply-avatar">{{ getAvatar(reply.nickname) }}</view>
-                <view class="reply-user">
-                  <text v-if="reply.replyToNickname" class="reply-to">回复</text>
-                  {{ reply.nickname }}
-                  <text v-if="reply.replyToNickname" class="reply-to">{{ reply.replyToNickname }}</text>
-                </view>
-                <view class="reply-time">{{ shortTime(reply.createdAt) }}</view>
+              <view class="comment-header">
+                <view class="comment-avatar">{{ getAvatar(comment.nickname) }}</view>
+                <view class="comment-user">{{ comment.nickname }}</view>
+                <view class="comment-time">{{ shortTime(comment.createdAt) }}</view>
               </view>
-              <view class="reply-text">{{ reply.content }}</view>
-            </view>
-          </view>
+              <view class="comment-text">{{ comment.content }}</view>
+              <view class="comment-actions">
+                <view
+                  class="comment-action-btn"
+                  :class="{ 'liked': comment.liked }"
+                  @click="handleCommentLike(comment)"
+                >
+                  <text class="material-symbols-outlined">
+                    {{ comment.liked ? 'thumb_up' : 'thumb_up_off_alt' }}
+                  </text>
+                  <text class="comment-likes">{{ comment.likeCount || 0 }}</text>
+                </view>
+                <view class="comment-action-btn" @click="toggleReplyInput(comment)">
+                  <text class="material-symbols-outlined">reply</text>
+                  <text>回复</text>
+                </view>
+              </view>
 
-          <view
-            v-if="comment.replies && comment.replies.length"
-            class="show-replies-btn"
-            @click="toggleReplies(comment)"
-          >
-            <text class="icon" style="font-size: 14px;">expand_more</text>
-            <text>{{ comment.replies.length }} 条回复</text>
+              <!-- 行内回复输入框：点击"回复"在该条留言下展开 -->
+              <view v-if="comment.showReplyInput" class="reply-input-area">
+                <input
+                  v-model="comment.replyDraft"
+                  :placeholder="'回复 ' + comment.nickname + '...'"
+                  class="reply-input"
+                  confirm-type="send"
+                  @confirm="submitReply(comment)"
+                />
+                <view class="reply-send-btn" @click="submitReply(comment)">
+                  <text class="material-symbols-outlined reply-send-icon">send</text>
+                </view>
+              </view>
+
+              <!-- 回复折叠展示："N 条回复"点击展开/收起 -->
+              <template v-if="comment.replies && comment.replies.length">
+                <view class="show-replies-btn" @click="toggleReplies(comment)">
+                  <text
+                    class="material-symbols-outlined replies-icon"
+                    :class="{ 'replies-expanded': comment.showReplies }"
+                  >expand_more</text>
+                  <text>{{ comment.replies.length }} 条回复</text>
+                </view>
+                <view v-if="comment.showReplies" class="replies-section">
+                  <view v-for="reply in comment.replies" :key="reply.id" class="reply-item">
+                    <view class="reply-header">
+                      <view class="reply-avatar">{{ getAvatar(reply.nickname) }}</view>
+                      <view class="reply-user">
+                        <text v-if="reply.replyToNickname" class="reply-to">回复</text>
+                        {{ reply.nickname }}
+                        <text v-if="reply.replyToNickname" class="reply-to">{{ reply.replyToNickname }}</text>
+                      </view>
+                      <view class="reply-time">{{ shortTime(reply.createdAt) }}</view>
+                    </view>
+                    <view class="reply-text">{{ reply.content }}</view>
+                  </view>
+                </view>
+              </template>
+            </view>
           </view>
         </view>
       </scroll-view>
 
-      <!-- 回复对象提示 -->
-      <view v-if="replyTarget" class="reply-hint">
-        <text>回复 {{ replyTarget.nickname }}</text>
-        <text class="reply-cancel" @click="cancelReply">取消</text>
-      </view>
-
-      <!-- 发表评论输入框 -->
+      <!-- 底部固定发表输入框 -->
       <view class="comment-input-section">
         <input
           v-model="newComment"
-          :placeholder="replyTarget ? `回复 ${replyTarget.nickname}...` : '写下你的感悟，结个善缘...'"
+          placeholder="写下你的感悟，结个善缘..."
           class="comment-input"
         />
         <view class="send-btn" @click="sendComment">
-          <text class="icon" style="font-size: 20px;">send</text>
+          <text class="material-symbols-outlined send-icon">send</text>
         </view>
       </view>
     </view>
@@ -237,16 +228,6 @@
         <view class="panel-close" @click="toggleSettings">
           <text class="material-symbols-outlined">close</text>
         </view>
-      </view>
-
-      <!-- 入定模式快捷入口 -->
-      <view
-        class="upload-btn"
-        @click="toggleZenMode(); closeAllPanels()"
-        style="width: 100%; margin-bottom: 20px; padding: 15px; border: 1px solid rgba(212, 175, 55, 0.3); background: rgba(212, 175, 55, 0.05); color: #d4af37; border-radius: 12px; letter-spacing: 2px; text-align: center;"
-      >
-        <text class="material-symbols-outlined">self_improvement</text>
-        <text>进入入定模式</text>
       </view>
 
       <!-- 配色方案 -->
@@ -280,17 +261,6 @@
         </view>
       </view>
     </view>
-
-    <!-- 入定模式 -->
-    <view class="zen-mode" :class="{ 'zen-active': zenMode }">
-      <view class="zen-content">
-        <text class="zen-text">道可道，非常道</text>
-        <text class="zen-subtitle">静心悟道</text>
-      </view>
-      <view class="zen-close" @click="toggleZenMode">
-        <text>退出入定</text>
-      </view>
-    </view>
     </template>
   </view>
 </template>
@@ -298,45 +268,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useUserStore } from '@/store/user'
-import { getChapters, getChapterDetail, getChapterComments, createComment, toggleCommentLike, addFavorite, removeFavorite, updateProgress } from '@/api'
-
-// 获取自定义 tabBar 实例（兼容H5和小程序）
-const getTabBar = () => {
-  try {
-    // H5环境下使用不同的方式获取tabBar
-    if (typeof uni.$getTabBar === 'function') {
-      const tabBar = uni.$getTabBar()
-      return tabBar?.children?.[0]?.component?.proxy
-    }
-    // H5环境备用方案：直接通过事件通信
-    return null
-  } catch (e) {
-    console.log('获取tabBar实例失败:', e)
-    return null
-  }
-}
-
-// 通知 tabBar 更新状态（兼容H5和小程序）
-const notifyTabBar = () => {
-  try {
-    // 优先尝试通过事件通知
-    uni.$emit('readingPageUpdate', {
-      favorited: currentChapter.value.favorited,
-      horizontal: isHorizontal.value
-    })
-
-    // 如果有tabBar实例，直接调用方法
-    const tabBar = getTabBar()
-    if (tabBar && tabBar.updateReadingState) {
-      tabBar.updateReadingState({
-        favorited: currentChapter.value.favorited,
-        horizontal: isHorizontal.value
-      })
-    }
-  } catch (e) {
-    console.log('通知tabBar失败（忽略）:', e)
-  }
-}
+import { getChapters, getChapterDetail, getChapterComments, createComment, toggleCommentLike, updateProgress } from '@/api'
 
 const userStore = useUserStore()
 
@@ -346,7 +278,6 @@ const currentChapter = ref({
   title: '道可道',
   content: '',
   interpretation: '',
-  favorited: false
 })
 const allChapters = ref([])
 const searchKeyword = ref('')
@@ -359,18 +290,16 @@ const loadError = ref('')
 const showChapterDrawer = ref(false)
 const showInterpretation = ref(false)
 const showSettings = ref(false)
-const showComments = ref(false)
-const zenMode = ref(false)
+const zenMode = ref(true)
 
 // 阅读设置
 const isHorizontal = ref(true)
 const fontSize = ref(32)
 const currentScheme = ref('ink')
 
-// 配色方案
 const colorSchemes = [
-  { id: 'ink', name: '水墨', preview: '#0a0a0a' },
-  { id: 'warm', name: '暖色', preview: '#2d1810' },
+  { id: 'ink', name: '水墨', preview: '#2d2d2d' },
+  { id: 'warm', name: '暖色', preview: '#4a3728' },
   { id: 'forest', name: '森林', preview: '#0a1a0a' },
   { id: 'night', name: '夜色', preview: '#050510' },
   { id: 'parchment', name: '宣纸', preview: '#d4c4a8' }
@@ -378,8 +307,11 @@ const colorSchemes = [
 
 // 评论相关
 const comments = ref([])
-const replyTarget = ref(null)
 const newComment = ref('')
+
+// 无操作自动入定间隔（毫秒）
+const ZEN_IDLE_MS = 5000
+let zenIdleTimer = null
 
 // 计算属性
 const filteredChapters = computed(() => {
@@ -396,10 +328,9 @@ const displayLines = computed(() => {
   return currentChapter.value.content.split('。').filter(line => line.trim())
 })
 
-const orientationClass = computed(() => ({
-  'horizontal': isHorizontal.value,
-  'vertical': !isHorizontal.value
-}))
+const anyPanelOpen = computed(() =>
+  showChapterDrawer.value || showInterpretation.value || showSettings.value
+)
 
 const hasPrevChapter = computed(() => currentChapter.value.id > 1)
 const hasNextChapter = computed(() => currentChapter.value.id < 81)
@@ -421,9 +352,7 @@ const loadChapters = async () => {
 // 加载章节详情
 const loadChapterDetail = async (chapterId) => {
   try {
-    console.log('开始加载章节详情:', chapterId)
     const result = await getChapterDetail(chapterId)
-    console.log('章节详情加载成功:', result)
     currentChapter.value = result
 
     // 更新阅读进度
@@ -434,9 +363,6 @@ const loadChapterDetail = async (chapterId) => {
 
     // 加载评论
     await loadComments(chapterId)
-
-    // 通知 tabBar 更新状态
-    notifyTabBar()
   } catch (error) {
     console.error('加载章节详情失败:', error)
     throw error // 让错误向上传播，这样可以被统一的错误处理捕获
@@ -460,13 +386,12 @@ const selectChapter = async (chapter) => {
   toggleChapterDrawer()
 }
 
-// 上一章
+// 上一章 / 下一章（由左右滑手势触发）
 const prevChapter = async () => {
   if (!hasPrevChapter.value) return
   await loadChapterDetail(currentChapter.value.id - 1)
 }
 
-// 下一章
 const nextChapter = async () => {
   if (!hasNextChapter.value) return
   await loadChapterDetail(currentChapter.value.id + 1)
@@ -487,18 +412,93 @@ const toggleSettings = () => {
   showSettings.value = !showSettings.value
 }
 
-// 评论面板
-const toggleComments = async () => {
-  if (!showComments.value) {
-    // 打开时重新加载评论
-    await loadComments(currentChapter.value.id)
-  }
-  showComments.value = !showComments.value
+// 入定模式
+const enterZenMode = () => {
+  zenMode.value = true
+  stopZenIdleTimer()
 }
 
-// 入定模式
-const toggleZenMode = () => {
-  zenMode.value = !zenMode.value
+const exitZenMode = () => {
+  if (!zenMode.value) return
+  zenMode.value = false
+  startZenIdleTimer()
+}
+
+// 无操作计时器：正常态下闲置 ZEN_IDLE_MS 后自动回到入定模式
+const stopZenIdleTimer = () => {
+  if (zenIdleTimer) {
+    clearTimeout(zenIdleTimer)
+    zenIdleTimer = null
+  }
+}
+
+const startZenIdleTimer = () => {
+  stopZenIdleTimer()
+  if (zenMode.value || anyPanelOpen.value || isLoading.value || loadError.value) return
+  zenIdleTimer = setTimeout(() => {
+    zenIdleTimer = null
+    enterZenMode()
+  }, ZEN_IDLE_MS)
+}
+
+// 任一面板打开期间暂停倒计时，全部关闭后重新计时
+watch(anyPanelOpen, (open) => {
+  if (open) {
+    stopZenIdleTimer()
+  } else {
+    startZenIdleTimer()
+  }
+})
+
+// 触摸手势：上划退出入定，左右滑切换章节
+let touchStartX = 0
+let touchStartY = 0
+let gestureReady = false
+
+const handleTouchStart = (e) => {
+  gestureReady = false
+  if (isLoading.value || loadError.value || anyPanelOpen.value) return
+
+  // 正常态：任何触摸都视为活跃，重置自动入定倒计时
+  if (!zenMode.value) {
+    startZenIdleTimer()
+  }
+
+  const touch = e.touches && e.touches[0]
+  if (!touch) return
+  touchStartX = touch.clientX
+  touchStartY = touch.clientY
+  gestureReady = true
+}
+
+const handleTouchEnd = (e) => {
+  if (!gestureReady) return
+  gestureReady = false
+
+  const touch = e.changedTouches && e.changedTouches[0]
+  if (!touch) return
+
+  const dx = touch.clientX - touchStartX
+  const dy = touch.clientY - touchStartY
+  const absX = Math.abs(dx)
+  const absY = Math.abs(dy)
+
+  // 纵向手势：上划退出入定
+  if (absY > 40 && absY > absX * 1.5) {
+    if (dy < 0 && zenMode.value) {
+      exitZenMode()
+    }
+    return
+  }
+
+  // 横向手势：右滑上一章，左滑下一章
+  if (absX > 60 && absX > absY * 1.5) {
+    if (dx < 0) {
+      nextChapter()
+    } else {
+      prevChapter()
+    }
+  }
 }
 
 // 横竖排切换
@@ -506,41 +506,6 @@ const toggleOrientation = () => {
   isHorizontal.value = !isHorizontal.value
   // 保存设置
   uni.setStorageSync('orientation', isHorizontal.value)
-  // 通知 tabBar 更新状态
-  notifyTabBar()
-}
-
-// 收藏切换
-const toggleFavorite = async () => {
-  if (!userStore.isLoggedIn()) {
-    uni.showToast({
-      title: '请先登录',
-      icon: 'none'
-    })
-    return
-  }
-
-  try {
-    if (currentChapter.value.favorited) {
-      await removeFavorite(currentChapter.value.id)
-      currentChapter.value.favorited = false
-      uni.showToast({
-        title: '已取消收藏',
-        icon: 'none'
-      })
-    } else {
-      await addFavorite(currentChapter.value.id)
-      currentChapter.value.favorited = true
-      uni.showToast({
-        title: '收藏成功',
-        icon: 'success'
-      })
-    }
-    // 通知 tabBar 更新状态
-    notifyTabBar()
-  } catch (error) {
-    console.error('收藏操作失败:', error)
-  }
 }
 
 // 配色方案选择
@@ -573,50 +538,85 @@ const handleSearch = () => {
 const closeAllPanels = () => {
   showChapterDrawer.value = false
   showInterpretation.value = false
-  showComments.value = false
   showSettings.value = false
 }
 
-// 跳转到个人中心
-const navigateToProfile = () => {
-  uni.navigateTo({
-    url: '/pages/profile/index'
-  })
+// 返回首页
+const goBackHome = () => {
+  const pages = getCurrentPages()
+  if (pages && pages.length > 1) {
+    uni.navigateBack({})
+  } else {
+    // 直接打开本页（无返回栈）时兜底回阅读首页
+    uni.switchTab({ url: '/pages/reading/home' })
+  }
 }
 
 // 获取头像字符（取昵称第一个字或随机字符）
 const getAvatar = (nickname) => {
   if (!nickname) return '道'
-  const chars = ['道', '德', '经', '无', '为', '悟', '玄']
+  const chars = ['道', '德', '经', '无为', '悟', '玄']
   return nickname.charAt(0) || chars[Math.floor(Math.random() * chars.length)]
 }
 
-// 「2026-08-24 18:34」→「08-24 18:34」，面板窄，完整日期会被挤掉
 const shortTime = (t) => (t || '').slice(5)
 
-// 切换回复显示状态
+// 展开/收起回复列表
 const toggleReplies = (comment) => {
-  if (!comment.showReplies) {
-    comment.showReplies = true
-  } else {
-    comment.showReplies = false
-  }
+  comment.showReplies = !comment.showReplies
 }
 
-// 选中/取消回复对象
-const startReply = (comment) => {
+// 展开/收起行内回复输入框（同时只展开一条）
+const toggleReplyInput = (comment) => {
   if (!userStore.isLoggedIn()) {
     uni.showToast({ title: '请先登录', icon: 'none' })
     return
   }
-  replyTarget.value = comment
+  const opening = !comment.showReplyInput
+  comments.value.forEach(c => {
+    c.showReplyInput = false
+  })
+  if (opening) {
+    comment.replyDraft = ''
+    comment.showReplyInput = true
+    // 展开输入框时顺带展示该条的回复列表，方便对照上下文
+    if (comment.replies && comment.replies.length) {
+      comment.showReplies = true
+    }
+  } else {
+    comment.replyDraft = ''
+  }
 }
 
-const cancelReply = () => {
-  replyTarget.value = null
+// 提交行内回复
+const submitReply = async (comment) => {
+  const content = (comment.replyDraft || '').trim()
+  if (!content) return
+
+  try {
+    await createComment({
+      chapterId: currentChapter.value.id,
+      content,
+      parentId: comment.id,
+      replyToUserId: comment.userId
+    })
+
+    comment.replyDraft = ''
+    comment.showReplyInput = false
+    uni.showToast({
+      title: '回复成功',
+      icon: 'success'
+    })
+    // 重新加载评论，并保持该条回复列表展开
+    await loadComments(currentChapter.value.id)
+    const target = comments.value.find(c => c.id === comment.id)
+    if (target) target.showReplies = true
+  } catch (error) {
+    console.error('回复失败:', error)
+  }
 }
 
-// 发送评论
+// 发表留言（面板底部固定输入框）
 const sendComment = async () => {
   if (!canSendComment.value) {
     if (!userStore.isLoggedIn()) {
@@ -629,17 +629,12 @@ const sendComment = async () => {
   }
 
   try {
-    // 有回复对象就带上 parentId，后端据此区分留言与回复
     await createComment({
       chapterId: currentChapter.value.id,
-      content: newComment.value.trim(),
-      ...(replyTarget.value
-        ? { parentId: replyTarget.value.id, replyToUserId: replyTarget.value.userId }
-        : {})
+      content: newComment.value.trim()
     })
 
     newComment.value = ''
-    replyTarget.value = null
     uni.showToast({
       title: '发布成功',
       icon: 'success'
@@ -672,15 +667,9 @@ const handleCommentLike = async (comment) => {
   }
 }
 
-// 滚动到底部
-const handleScrollToLower = () => {
-  // 可以加载更多评论等
-}
-
 // 初始化
 onMounted(async () => {
   try {
-    console.log('阅读页面初始化开始')
     isLoading.value = true
     loadError.value = ''
 
@@ -726,31 +715,19 @@ onMounted(async () => {
       console.log('获取页面参数失败，使用默认章节:', e)
     }
 
-    console.log('目标章节ID:', targetChapterId)
     await loadChapterDetail(targetChapterId)
-
-    // 通知 tabBar 更新状态
-    notifyTabBar()
-
-    console.log('阅读页面初始化完成')
   } catch (error) {
     console.error('阅读页面初始化失败:', error)
     loadError.value = '连接服务器超时，请点击屏幕重试'
   } finally {
     isLoading.value = false
+    // 页面默认进入入定模式；若仍在正常态则启动自动入定倒计时
+    startZenIdleTimer()
   }
 
-  // 监听自定义 tabBar 的事件
-  uni.$on('prevChapter', () => {
-    prevChapter()
-  })
-
-  uni.$on('nextChapter', () => {
-    nextChapter()
-  })
-
-  uni.$on('toggleFavorite', () => {
-    toggleFavorite()
+  // 监听底部工具栏的章节目录事件（预留外部触发通道）
+  uni.$on('toggleChapterDrawer', () => {
+    toggleChapterDrawer()
   })
 
   uni.$on('toggleOrientation', () => {
@@ -759,10 +736,6 @@ onMounted(async () => {
 
   uni.$on('toggleInterpretation', () => {
     toggleInterpretation()
-  })
-
-  uni.$on('toggleComments', () => {
-    toggleComments()
   })
 })
 
@@ -793,18 +766,17 @@ const handleRetry = async () => {
     loadError.value = '连接服务器超时，请点击屏幕重试'
   } finally {
     isLoading.value = false
+    startZenIdleTimer()
   }
 }
 
 // 监听页面卸载，移除事件监听
 onUnmounted(() => {
+  stopZenIdleTimer()
   try {
-    uni.$off('prevChapter')
-    uni.$off('nextChapter')
-    uni.$off('toggleFavorite')
+    uni.$off('toggleChapterDrawer')
     uni.$off('toggleOrientation')
     uni.$off('toggleInterpretation')
-    uni.$off('toggleComments')
   } catch (e) {
     console.log('移除事件监听失败:', e)
   }
@@ -889,31 +861,34 @@ onUnmounted(() => {
   letter-spacing: 1px;
 }
 
-// 顶部导航
+// 顶部导航：返回 + 第X章
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 35px 25px 20px;
-  transition: all 0.6s ease;
+  align-items: center;
+  padding: calc(35px + env(safe-area-inset-top)) 25px 12px;
+  transition: all 0.45s ease;
   z-index: 10;
   flex-shrink: 0;
 }
 
-.header-title {
-  flex: 1;
-}
-
-.logo {
-  font-size: 24px;
-  letter-spacing: 10px;
-  font-weight: 300;
-  color: rgba(248, 246, 242, 0.9);
-}
-
-.header-icons {
+.header-side {
+  width: 34px;
   display: flex;
-  gap: 10px;
+  justify-content: flex-start;
+}
+
+.header-side-right {
+  justify-content: flex-end;
+}
+
+.header-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .icon-btn {
@@ -935,6 +910,23 @@ onUnmounted(() => {
   transform: scale(0.9);
 }
 
+.icon-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.chapter-num {
+  font-size: 13px;
+  color: rgba(212, 175, 55, 0.75);
+  letter-spacing: 3px;
+  white-space: nowrap;
+}
+
+.chapter-divider {
+  width: 35px;
+  height: 1px;
+  background: rgba(212, 175, 55, 0.25);
+}
+
 // 主要内容区域
 .main-content {
   flex: 1;
@@ -945,7 +937,7 @@ onUnmounted(() => {
   align-items: center;
   overflow: hidden;
   transition: all 0.6s ease;
-  padding: 20px 40px;
+  padding: 10px 40px 70px;
   z-index: 10;
   position: relative;
 }
@@ -957,35 +949,12 @@ onUnmounted(() => {
   justify-content: center;
   opacity: 1;
   transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-style: preserve-3d;
   text-align: center;
   position: relative;
   z-index: 10;
   max-width: 100%;
   max-height: 100%;
   overflow: auto;
-}
-
-// 章节标题
-.chapter-header {
-  text-align: center;
-  margin-bottom: 15px;
-  opacity: 0;
-  animation: fade-in 1.5s ease-out 0.3s forwards;
-}
-
-.chapter-num {
-  font-size: 11px;
-  color: rgba(212, 175, 55, 0.5);
-  letter-spacing: 3px;
-  margin-bottom: 20px;
-}
-
-.chapter-divider {
-  width: 35px;
-  height: 1px;
-  background: rgba(212, 175, 55, 0.25);
-  margin: 0 auto;
 }
 
 // 横向文字样式
@@ -995,42 +964,117 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.95);
   text-align: center;
   letter-spacing: 0.25em;
-  opacity: 0;
-  animation: fade-in 2s ease-out 1s forwards;
+  animation: fade-in 2s ease-out forwards;
   padding: 0 2rem;
   max-width: 90vw;
 }
 
 // 竖向文字样式
+// 列间距仅由 line-height 控制：1.4rem × 1.45 列宽，列间留白 ≈ 0.63rem，
+// 与横排行距留白（1.25rem × 1.5 行距 − 1.25rem 字高 ≈ 0.63rem）一致
 .chapter-content-vertical {
   font-size: 1.4rem;
-  line-height: 1.5;
+  line-height: 1.45;
   color: rgba(255, 255, 255, 0.95);
   text-align: center;
   letter-spacing: 0.35em;
-  opacity: 0;
-  animation: fade-in 2s ease-out 1s forwards;
+  animation: fade-in 2s ease-out forwards;
   writing-mode: vertical-rl;
   text-orientation: upright;
   height: 55vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1.25em;
   padding: 2rem 0;
 }
 
-// 底部导航 - 已迁移到自定义tabBar
-.bottom-section {
-  display: none !important;
+// 入定模式：底部上划提示
+.zen-swipe-hint {
+  position: fixed;
+  left: 50%;
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 18px 6px;
+  border-radius: 24px;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  cursor: pointer;
+  z-index: 60;
+  animation: hint-float 3s ease-in-out infinite;
+  transition: opacity 0.3s ease;
 }
 
-.nav-btn, .action-btn {
+.zen-swipe-hint:active {
+  opacity: 0.6;
+}
+
+.zen-hint-icon {
+  font-size: 18px;
+  color: rgba(212, 175, 55, 0.75);
+}
+
+.zen-hint-text {
+  font-size: 11px;
+  color: rgba(212, 175, 55, 0.65);
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+@keyframes hint-float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-4px); }
+}
+
+// 底部工具栏：左下目录 / 中间横竖排 / 右下释义
+.bottom-toolbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 28px calc(20px + env(safe-area-inset-bottom));
+  min-height: 70px;
+  background: linear-gradient(0deg, rgba(10, 10, 10, 0.85) 0%, rgba(10, 10, 10, 0) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 50;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.toolbar-hidden {
+  opacity: 0;
+  transform: translateY(100%);
+  pointer-events: none;
+}
+
+.toolbar-side {
+  width: 60px;
+  display: flex;
+  justify-content: center;
+}
+
+.toolbar-side-right {
+  justify-content: flex-end;
+}
+
+.toolbar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.action-btn {
   width: 48px;
   height: 48px;
-  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 50%;
-  font-size: 22px;
+  border: 1px solid rgba(255,255,255,0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1038,29 +1082,32 @@ onUnmounted(() => {
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   background: rgba(255,255,255,0.03);
   color: rgba(232, 228, 220, 0.8);
-  position: relative;
-  overflow: hidden;
 }
 
-.nav-btn:active, .action-btn:active {
+.action-btn:active {
   transform: scale(0.9);
 }
 
-.center-actions {
-  display: flex;
-  gap: 15px;
-}
-
 .action-btn.active {
-  color: #ff6b6b;
-  border-color: rgba(255, 107, 107, 0.3);
-  box-shadow: 0 0 15px rgba(255, 107, 107, 0.2);
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.3);
 }
 
-.action-btn.orientation.active {
-  color: #e2e2e2;
-  border-color: rgba(226, 226, 226, 0.3);
-  box-shadow: 0 0 15px rgba(226, 226, 226, 0.2);
+.action-btn .material-symbols-outlined {
+  font-size: 22px;
+}
+
+// 入定模式下隐藏头部与工具栏
+.reading-container.is-zen {
+  .header {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-15px);
+  }
+
+  .main-content {
+    padding-bottom: 40px;
+  }
 }
 
 // 章节导航面板
@@ -1198,18 +1245,20 @@ onUnmounted(() => {
   letter-spacing: 1px;
 }
 
-// 解读面板
+// 解读面板：释义 + 悟道留言 + 底部固定输入框
 .interpretation-panel {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  max-height: 80vh;
+  height: 80vh;
   border-radius: 24px 24px 0 0;
   z-index: 200;
   transform: translateY(100%);
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   background: rgba(18, 18, 18, 0.85);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
@@ -1223,15 +1272,19 @@ onUnmounted(() => {
 .panel-handle {
   width: 40px;
   height: 4px;
-  background: rgba(255,255,255,0.2);
   border-radius: 2px;
+  background: rgba(255,255,255,0.2);
   margin: 15px auto;
+  flex-shrink: 0;
 }
 
-.interpretation-content {
-  padding: 0 25px 30px;
-  max-height: 70vh;
-  overflow-y: auto;
+.panel-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.panel-inner {
+  padding: 0 25px 15px;
 }
 
 .interpretation-label {
@@ -1251,61 +1304,34 @@ onUnmounted(() => {
   text-align: justify;
 }
 
-// 评论面板
-.comments-panel {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-height: 80vh;
-  border-radius: 24px 24px 0 0;
-  z-index: 200;
-  transform: translateY(100%);
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-  background: rgba(18, 18, 18, 0.85);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
+// 悟道留言区（释义面板内）
+.comments-section {
   border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 20px;
 }
 
-.comments-panel.active {
-  transform: translateY(0);
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 25px 25px 15px;
-}
-
-.panel-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #f8f6f2;
-}
-
-.panel-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.1);
-  font-size: 14px;
-  cursor: pointer;
-  background: rgba(255,255,255,0.05);
-  color: #f8f6f2;
-}
-
-// 评论区
 .comments-header {
   font-size: 15px;
   font-weight: 500;
-  margin-bottom: 20px;
   color: #f8f6f2;
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-bottom: 16px;
+}
+
+.comments-icon {
+  font-size: 18px;
+  color: #d4af37;
+}
+
+.no-comments {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 2px;
 }
 
 .comment-item {
@@ -1384,6 +1410,10 @@ onUnmounted(() => {
   color: #d4af37;
 }
 
+.comment-action-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
 .comment-likes {
   font-size: 12px;
 }
@@ -1445,10 +1475,42 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
-.reply-input-area {
+.show-replies-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: rgba(212, 175, 55, 0.7);
   margin-top: 8px;
+  padding: 0;
+}
+
+.show-replies-btn:active {
+  color: #d4af37;
+}
+
+.replies-icon {
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+.replies-icon.replies-expanded {
+  transform: rotate(180deg);
+}
+
+.send-icon {
+  font-size: 20px;
+}
+
+// 行内回复输入框（在对应留言下方展开）
+.reply-input-area {
+  margin-top: 10px;
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .reply-input {
@@ -1485,30 +1547,19 @@ onUnmounted(() => {
   background: rgba(212,175,55,0.15);
 }
 
-.show-replies-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  color: rgba(212, 175, 55, 0.7);
-  margin-top: 8px;
-  padding: 0;
+.reply-send-icon {
+  font-size: 14px;
 }
 
-.show-replies-btn:active {
-  color: #d4af37;
-}
-
-.comment-input-area {
+// 底部固定发表输入框
+.comment-input-section {
   position: sticky;
   bottom: 0;
-  padding: 15px 0 5px;
+  padding: 15px 25px calc(15px + env(safe-area-inset-bottom));
   display: flex;
   gap: 12px;
-  background: linear-gradient(0deg, rgba(15,20,25,1) 60%, rgba(15,20,25,0));
+  background: linear-gradient(0deg, rgba(18,18,18,1) 60%, rgba(18,18,18,0));
+  flex-shrink: 0;
 }
 
 .comment-input {
@@ -1552,7 +1603,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   border-radius: 24px 24px 0 0;
-  padding: 25px 20px 35px;
+  padding: 25px 20px calc(35px + env(safe-area-inset-bottom));
   z-index: 200;
   transform: translateY(100%);
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1612,69 +1663,27 @@ onUnmounted(() => {
   color: #fff;
 }
 
-// 入定模式
-.zen-mode {
+// 遮罩层
+.overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(10, 10, 10, 0.98);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 300;
+  background: rgba(0, 0, 0, 0.5);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.5s;
+  transition: opacity 0.3s ease;
+  z-index: 150;
 }
 
-.zen-mode.zen-active {
+.overlay.active {
   opacity: 1;
   pointer-events: auto;
 }
 
-.zen-content {
-  text-align: center;
-}
-
-.zen-text {
-  display: block;
-  font-size: 48rpx;
-  color: #d4af37;
-  margin-bottom: 40rpx;
-  letter-spacing: 8rpx;
-}
-
-.zen-subtitle {
-  display: block;
-  font-size: 32rpx;
-  color: #888;
-  letter-spacing: 4rpx;
-}
-
-.zen-close {
-  margin-top: 100rpx;
-  padding: 20rpx 60rpx;
-  background: rgba(212, 175, 55, 0.2);
-  border: 1px solid rgba(212, 175, 55, 0.5);
-  border-radius: 50rpx;
-  color: #d4af37;
-  font-size: 28rpx;
-}
-
-// 入定模式下隐藏工具栏
-.reading-container:has(.zen-mode.zen-active) {
-  .header,
-  .bottom-section {
-    opacity: 0;
-    pointer-events: none;
-  }
-}
-
-// 翻页控制
-.pagination-controls {
-  display: none; // 使用底部按钮替代
+@keyframes fade-in {
+  from { opacity: 0; filter: blur(6px); }
+  to { opacity: 1; filter: blur(0); }
 }
 </style>
