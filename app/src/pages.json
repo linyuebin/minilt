@@ -1,46 +1,67 @@
 {
   "pages": [
     {
-      "path": "pages/reading/index",
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/reading/home",
       "style": {
         "navigationBarTitleText": "道德经",
         "navigationStyle": "custom"
       }
     },
     {
-      "path": "pages/profile/index",
+      "path": "pages/reading/index",
       "style": {
-        "navigationBarTitleText": "个人中心"
+        "navigationBarTitleText": "道德经",
+        "navigationStyle": "custom",
+        "disableScroll": true
       }
     },
     {
-      "path": "pages/login/index",
+      "path": "pages/profile/index",
       "style": {
-        "navigationBarTitleText": "登录"
+        "navigationBarTitleText": "个人中心",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/profile/comments",
       "style": {
-        "navigationBarTitleText": "我的留言"
+        "navigationBarTitleText": "我的留言",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/profile/likes",
       "style": {
-        "navigationBarTitleText": "我的点赞"
+        "navigationBarTitleText": "我的点赞",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/profile/replies",
       "style": {
-        "navigationBarTitleText": "历史回复"
+        "navigationBarTitleText": "历史回复",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/profile/favorites",
       "style": {
-        "navigationBarTitleText": "修道藏经"
+        "navigationBarTitleText": "修道藏经",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/community/index",
+      "style": {
+        "navigationBarTitleText": "道友",
+        "navigationStyle": "custom"
       }
     }
   ],
@@ -51,18 +72,32 @@
     "backgroundColor": "#0a0a0a"
   },
   "tabBar": {
+    "custom": true,
     "color": "#888888",
     "selectedColor": "#d4af37",
-    "backgroundColor": "#1a1a1a",
-    "borderStyle": "white",
+    "backgroundColor": "#0e0e0e",
+    "borderStyle": "black",
     "list": [
       {
-        "pagePath": "pages/reading/index",
+        "pagePath": "pages/reading/home",
         "text": "阅读"
+      },
+      {
+        "pagePath": "pages/community/index",
+        "text": "道友"
       },
       {
         "pagePath": "pages/profile/index",
         "text": "我的"
+      }
+    ]
+  },
+  "condition": {
+    "current": 0,
+    "list": [
+      {
+        "path": "pages/login/index",
+        "name": "登录页"
       }
     ]
   }

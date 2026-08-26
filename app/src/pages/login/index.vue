@@ -10,7 +10,7 @@
 
       <view class="form-section">
         <view class="input-group">
-          <text class="icon">👤</text>
+          <text class="material-symbols-outlined">person</text>
           <input
             v-model="formData.username"
             placeholder="请输入用户名"
@@ -20,7 +20,7 @@
         </view>
 
         <view class="input-group">
-          <text class="icon">🔒</text>
+          <text class="material-symbols-outlined">lock</text>
           <input
             v-model="formData.password"
             type="password"
@@ -50,11 +50,11 @@
         <view class="modal-content">
           <view class="modal-header">
             <text class="modal-title">注册新账号</text>
-            <text class="modal-close" @click="switchToRegister">×</text>
+            <text class="material-symbols-outlined modal-close" @click="switchToRegister">close</text>
           </view>
 
           <view class="input-group">
-            <text class="icon">👤</text>
+            <text class="material-symbols-outlined">person</text>
             <input
               v-model="registerData.username"
               placeholder="请输入用户名"
@@ -64,7 +64,7 @@
           </view>
 
           <view class="input-group">
-            <text class="icon">🔒</text>
+            <text class="material-symbols-outlined">lock</text>
             <input
               v-model="registerData.password"
               type="password"
@@ -75,7 +75,7 @@
           </view>
 
           <view class="input-group">
-            <text class="icon">📧</text>
+            <text class="material-symbols-outlined">lock</text>
             <input
               v-model="registerData.confirmPassword"
               type="password"
@@ -185,7 +185,7 @@ const handleLogin = async () => {
 
     setTimeout(() => {
       uni.switchTab({
-        url: '/pages/reading/index'
+        url: '/pages/reading/home'
       })
     }, 1500)
   } catch (error) {
@@ -218,7 +218,7 @@ const handleRegister = async () => {
 
     setTimeout(() => {
       uni.switchTab({
-        url: '/pages/reading/index'
+        url: '/pages/reading/home'
       })
     }, 1500)
   } catch (error) {
@@ -263,7 +263,7 @@ const handleWxLogin = async (e) => {
 
     setTimeout(() => {
       uni.switchTab({
-        url: '/pages/reading/index'
+        url: '/pages/reading/home'
       })
     }, 1500)
   } catch (error) {
@@ -285,7 +285,13 @@ const handleGuestLogin = () => {
 <style lang="scss" scoped>
 .login-container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+  background: radial-gradient(ellipse at center, rgb(40,40,40) 0%, #0e0e0e 100%);
+  color: #e2e2e2;
+  font-family: "KaiTi", "STKaiti", "KaiTi_GB2312", "Songti SC", serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 40rpx;
   box-sizing: border-box;
 }
@@ -293,140 +299,226 @@ const handleGuestLogin = () => {
 // H5端样式
 // #ifdef H5
 .h5-login {
-  .logo-section {
-    text-align: center;
-    padding: 100rpx 0 80rpx;
+  width: 100%;
+  max-width: 480px;
+  animation: fade-in-up 0.8s ease-out;
+}
 
-    .logo-text {
-      display: block;
-      font-size: 60rpx;
-      font-weight: bold;
-      color: #d4af37;
-      margin-bottom: 20rpx;
-      letter-spacing: 8rpx;
+.logo-section {
+  text-align: center;
+  padding: 80rpx 0 60rpx;
+
+  .logo-text {
+    display: block;
+    font-size: 48rpx;
+    font-weight: 300;
+    color: rgba(248, 246, 242, 0.9);
+    margin-bottom: 16rpx;
+    letter-spacing: 12rpx;
+  }
+
+  .logo-subtitle {
+    display: block;
+    font-size: 24rpx;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 4rpx;
+  }
+}
+
+.form-section {
+  .input-group {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 28rpx 32rpx;
+    margin-bottom: 24rpx;
+    transition: all 0.3s ease;
+
+    &:focus-within {
+      border-color: rgba(212, 175, 55, 0.3);
+      background: rgba(255, 255, 255, 0.05);
     }
 
-    .logo-subtitle {
-      display: block;
-      font-size: 28rpx;
-      color: #888;
-      letter-spacing: 4rpx;
+    .icon {
+      font-size: 36rpx;
+      margin-right: 20rpx;
+      opacity: 0.6;
+    }
+
+    .input-field {
+      flex: 1;
+      font-size: 30rpx;
+      color: #e2e2e2;
+      background: transparent;
+      border: none;
+      outline: none;
+    }
+
+    :deep(.input-placeholder) {
+      color: rgba(255, 255, 255, 0.3);
     }
   }
 
-  .form-section {
+  .login-btn {
+    width: 100%;
+    height: 96rpx;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 16px;
+    color: #d4af37;
+    font-size: 32rpx;
+    font-weight: 500;
+    letter-spacing: 4rpx;
+    margin-top: 48rpx;
+    transition: all 0.3s ease;
+
+    &.btn-disabled {
+      opacity: 0.3;
+    }
+
+    &:not(.btn-disabled):active {
+      background: rgba(212, 175, 55, 0.2);
+      transform: scale(0.98);
+    }
+  }
+
+  .register-tip {
+    text-align: center;
+    margin-top: 40rpx;
+    font-size: 26rpx;
+    color: rgba(255, 255, 255, 0.5);
+
+    .link {
+      color: #d4af37;
+      margin-left: 8rpx;
+      padding: 8rpx 16rpx;
+      border-radius: 8px;
+      background: rgba(212, 175, 55, 0.05);
+      transition: all 0.2s;
+    }
+
+    .link:active {
+      background: rgba(212, 175, 55, 0.1);
+    }
+  }
+}
+
+.register-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 40rpx;
+  animation: fade-in 0.3s ease;
+
+  .modal-content {
+    background: rgba(18, 18, 18, 0.95);
+    border-radius: 20rpx;
+    padding: 48rpx;
+    width: 100%;
+    max-width: 520rpx;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40rpx;
+
+      .modal-title {
+        font-size: 36rpx;
+        font-weight: 500;
+        color: #d4af37;
+        letter-spacing: 2rpx;
+      }
+
+      .modal-close {
+        font-size: 56rpx;
+        color: rgba(255, 255, 255, 0.4);
+        line-height: 1;
+        width: 56rpx;
+        height: 56rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+        transition: all 0.2s;
+      }
+
+      .modal-close:active {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+
     .input-group {
       display: flex;
       align-items: center;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(212, 175, 55, 0.3);
-      border-radius: 8rpx;
-      padding: 30rpx;
-      margin-bottom: 30rpx;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 28rpx 32rpx;
+      margin-bottom: 24rpx;
+      transition: all 0.3s ease;
 
-      .icon {
-        font-size: 40rpx;
+      &:focus-within {
+        border-color: rgba(212, 175, 55, 0.3);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .material-symbols-outlined {
+        font-size: 36rpx;
         margin-right: 20rpx;
-        opacity: 0.7;
+        opacity: 0.6;
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
       }
 
       .input-field {
         flex: 1;
-        font-size: 32rpx;
-        color: #fff;
+        font-size: 30rpx;
+        color: #e2e2e2;
+        background: transparent;
+        border: none;
+        outline: none;
       }
 
       :deep(.input-placeholder) {
-        color: #666;
+        color: rgba(255, 255, 255, 0.3);
       }
     }
 
-    .login-btn {
+    .register-btn {
       width: 100%;
-      height: 90rpx;
-      background: linear-gradient(135deg, #d4af37 0%, #aa8a2c 100%);
-      border: none;
-      border-radius: 8rpx;
-      color: #000;
-      font-size: 36rpx;
-      font-weight: bold;
-      margin-top: 60rpx;
+      height: 96rpx;
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 16px;
+      color: #d4af37;
+      font-size: 32rpx;
+      font-weight: 500;
+      letter-spacing: 4rpx;
+      margin-top: 40rpx;
+      transition: all 0.3s ease;
 
       &.btn-disabled {
-        opacity: 0.5;
+        opacity: 0.3;
       }
 
       &:not(.btn-disabled):active {
-        opacity: 0.8;
-      }
-    }
-
-    .register-tip {
-      text-align: center;
-      margin-top: 40rpx;
-      font-size: 28rpx;
-      color: #888;
-
-      .link {
-        color: #d4af37;
-        margin-left: 10rpx;
-      }
-    }
-  }
-
-  .register-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-
-    .modal-content {
-      background: #1a1a1a;
-      border-radius: 16rpx;
-      padding: 40rpx;
-      width: 90%;
-      max-width: 600rpx;
-      border: 1px solid rgba(212, 175, 55, 0.3);
-
-      .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 40rpx;
-
-        .modal-title {
-          font-size: 36rpx;
-          font-weight: bold;
-          color: #d4af37;
-        }
-
-        .modal-close {
-          font-size: 60rpx;
-          color: #666;
-          line-height: 1;
-        }
-      }
-
-      .register-btn {
-        width: 100%;
-        height: 90rpx;
-        background: linear-gradient(135deg, #d4af37 0%, #aa8a2c 100%);
-        border: none;
-        border-radius: 8rpx;
-        color: #000;
-        font-size: 36rpx;
-        font-weight: bold;
-        margin-top: 40rpx;
-
-        &.btn-disabled {
-          opacity: 0.5;
-        }
+        background: rgba(212, 175, 55, 0.2);
+        transform: scale(0.98);
       }
     }
   }
@@ -436,75 +528,90 @@ const handleGuestLogin = () => {
 // 微信小程序样式
 // #ifdef MP-WEIXIN
 .mp-login {
-  .logo-section {
-    text-align: center;
-    padding: 120rpx 0 100rpx;
+  width: 100%;
+  max-width: 480px;
+  animation: fade-in-up 0.8s ease-out;
+}
 
-    .logo-text {
-      display: block;
-      font-size: 64rpx;
-      font-weight: bold;
-      color: #d4af37;
-      margin-bottom: 20rpx;
-      letter-spacing: 8rpx;
+.logo-section {
+  text-align: center;
+  padding: 120rpx 0 80rpx;
+
+  .logo-text {
+    display: block;
+    font-size: 56rpx;
+    font-weight: 300;
+    color: rgba(248, 246, 242, 0.9);
+    margin-bottom: 16rpx;
+    letter-spacing: 12rpx;
+  }
+
+  .logo-subtitle {
+    display: block;
+    font-size: 26rpx;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 4rpx;
+  }
+}
+
+.mp-section {
+  text-align: center;
+
+  .mp-tip {
+    display: block;
+    font-size: 30rpx;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 60rpx;
+  }
+
+  .wx-login-btn {
+    width: 80%;
+    height: 104rpx;
+    background: rgba(7, 193, 96, 0.1);
+    border: 1px solid rgba(7, 193, 96, 0.3);
+    border-radius: 52rpx;
+    color: #07c160;
+    font-size: 32rpx;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 40rpx;
+    transition: all 0.3s ease;
+
+    .wx-icon {
+      font-size: 44rpx;
+      margin-right: 16rpx;
     }
 
-    .logo-subtitle {
-      display: block;
-      font-size: 28rpx;
-      color: #888;
-      letter-spacing: 4rpx;
+    &:active {
+      background: rgba(7, 193, 96, 0.2);
+      transform: scale(0.98);
     }
   }
 
-  .mp-section {
-    text-align: center;
+  .guest-tip {
+    display: block;
+    font-size: 24rpx;
+    color: rgba(255, 255, 255, 0.4);
+  }
+}
 
-    .mp-tip {
-      display: block;
-      font-size: 32rpx;
-      color: #ccc;
-      margin-bottom: 60rpx;
-    }
+.guest-entry {
+  text-align: center;
+  margin-top: 80rpx;
 
-    .wx-login-btn {
-      width: 80%;
-      height: 100rpx;
-      background: linear-gradient(135deg, #07c160 0%, #06ae56 100%);
-      border: none;
-      border-radius: 50rpx;
-      color: #fff;
-      font-size: 36rpx;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 40rpx;
-
-      .wx-icon {
-        font-size: 48rpx;
-        margin-right: 16rpx;
-      }
-
-      &:active {
-        opacity: 0.8;
-      }
-    }
-
-    .guest-tip {
-      display: block;
-      font-size: 24rpx;
-      color: #666;
-    }
+  .guest-link {
+    font-size: 28rpx;
+    color: rgba(212, 175, 55, 0.7);
+    padding: 12rpx 32rpx;
+    border-radius: 50px;
+    background: rgba(212, 175, 55, 0.05);
+    transition: all 0.2s;
   }
 
-  .guest-entry {
-    text-align: center;
-    margin-top: 80rpx;
-
-    .guest-link {
-      font-size: 28rpx;
-      color: #d4af37;
-    }
+  .guest-link:active {
+    background: rgba(212, 175, 55, 0.1);
   }
 }
 // #endif

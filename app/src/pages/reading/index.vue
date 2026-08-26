@@ -1,224 +1,282 @@
 <template>
   <view class="reading-container">
-    <!-- 章节内容显示 -->
-    <view class="chapter-content" :class="orientationClass">
-      <!-- 标题 -->
-      <view class="chapter-title">
-        <text>第{{ currentChapter.id }}章 {{ currentChapter.title }}</text>
-      </view>
+    <!-- 加载状态 -->
+    <view v-if="isLoading" class="page-loading">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">正在加载经文...</text>
+    </view>
 
-      <!-- 经文内容 -->
-      <!-- 竖排时文字是横向排列的，溢出方向也是横向，必须切成横向滚动才能读到长章节 -->
-      <scroll-view
-        :scroll-y="isHorizontal"
-        :scroll-x="!isHorizontal"
-        class="content-scroll"
-        :class="orientationClass"
-        @scrolltolower="handleScrollToLower"
-      >
-        <view class="chapter-text" :class="orientationClass">
+    <!-- 错误状态 -->
+    <view v-else-if="loadError" class="page-error" @click="handleRetry">
+      <view class="error-icon">
+        <text class="material-symbols-outlined">error_outline</text>
+      </view>
+      <text class="error-text">{{ loadError }}</text>
+      <text class="retry-text">点击屏幕重试</text>
+    </view>
+
+    <!-- 正常内容 -->
+    <template v-else>
+    <!-- 退出入定模式按钮 -->
+    <view v-if="zenMode" class="meditation-exit" @click="toggleZenMode">
+      <text>退出入定</text>
+    </view>
+
+    <!-- 顶部导航 -->
+    <view class="header">
+      <view class="header-title">
+        <view class="logo">道德经</view>
+      </view>
+      <view class="header-icons">
+        <view class="icon-btn" @click="toggleChapterDrawer" title="章节目录">
+          <text class="material-symbols-outlined">menu</text>
+        </view>
+        <view class="icon-btn" @click="toggleZenMode" title="入定模式">
+          <text class="material-symbols-outlined">self_improvement</text>
+        </view>
+        <view class="icon-btn" @click="navigateToProfile" title="我的">
+          <text class="material-symbols-outlined">person</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 主要内容 -->
+    <view class="main-content">
+      <view class="chapter-container" id="chapterContainer">
+        <view class="chapter-header">
+          <view class="chapter-num">第{{ currentChapter.id }}章</view>
+          <view class="chapter-divider"></view>
+        </view>
+        <view
+          class="chapter-text"
+          :class="isHorizontal ? 'chapter-content-horizontal' : 'chapter-content-vertical'"
+        >
           <text class="text-line" v-for="(line, index) in displayLines" :key="index">
             {{ line }}
           </text>
         </view>
+      </view>
+    </view>
+
+    <!-- 底部导航区 - 已迁移到自定义tabBar，保留隐藏以防兼容性问题 -->
+    <view class="bottom-section" style="display: none;">
+      <view class="nav-btn" @click="prevChapter">
+        <text class="material-symbols-outlined">chevron_left</text>
+      </view>
+      <view class="center-actions">
+        <view
+          class="action-btn"
+          :class="{ 'active': currentChapter.favorited }"
+          @click="toggleFavorite"
+        >
+          <text class="material-symbols-outlined">favorite</text>
+        </view>
+        <view
+          class="action-btn orientation"
+          :class="{ 'active': !isHorizontal }"
+          @click="toggleOrientation"
+        >
+          <text class="material-symbols-outlined">rotate_90_degrees_ccw</text>
+        </view>
+        <view class="action-btn" @click="toggleInterpretation">
+          <text class="material-symbols-outlined">visibility</text>
+        </view>
+        <view class="action-btn" @click="toggleComments">
+          <text class="material-symbols-outlined">chat_bubble</text>
+        </view>
+      </view>
+      <view class="nav-btn" @click="nextChapter">
+        <text class="material-symbols-outlined">chevron_right</text>
+      </view>
+    </view>
+
+    <!-- 遮罩层 -->
+    <view class="overlay" :class="{ 'active': showChapterDrawer || showInterpretation || showComments || showSettings }" @click="closeAllPanels"></view>
+
+    <!-- 章节导航面板 -->
+    <view class="nav-panel" :class="{ 'active': showChapterDrawer }">
+      <view class="nav-header">
+        <view class="nav-title">八十一章</view>
+        <view class="icon-btn" @click="toggleChapterDrawer">
+          <text class="material-symbols-outlined">close</text>
+        </view>
+      </view>
+      <view class="nav-search">
+        <input
+          v-model="searchKeyword"
+          class="nav-search-input"
+          placeholder="搜索章节..."
+          @input="handleSearch"
+        />
+      </view>
+      <scroll-view class="nav-content" scroll-y>
+        <view
+          v-for="chapter in filteredChapters"
+          :key="chapter.id"
+          class="nav-chapter-item"
+          :class="{ 'active': chapter.id === currentChapter.id }"
+          @click="selectChapter(chapter)"
+        >
+          <view class="nav-chapter-num">{{ chapter.id }}</view>
+          <view class="nav-chapter-title">{{ chapter.title }}</view>
+        </view>
+      </scroll-view>
+      <view class="nav-footer">
+        <view class="nav-progress">阅读进度：{{ currentChapter.id }}/81</view>
+      </view>
+    </view>
+
+    <!-- 解读面板 -->
+    <view class="interpretation-panel" :class="{ 'active': showInterpretation }">
+      <view class="panel-handle" @click="toggleInterpretation"></view>
+      <view class="interpretation-content">
+        <view class="interpretation-label">经文释义</view>
+        <view class="interpretation-text">
+          {{ currentChapter.interpretation }}
+        </view>
+        <view class="comments-section">
+          <view class="comments-header">
+            <text class="icon" style="font-size: 18px;">forum</text>
+            <text>悟道留言</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 评论面板 -->
+    <view class="comments-panel" :class="{ 'active': showComments }">
+      <view class="panel-handle" @click="toggleComments"></view>
+      <view class="panel-header">
+        <view class="panel-title">悟道留言</view>
+        <view class="panel-close" @click="toggleComments">
+          <text class="material-symbols-outlined">close</text>
+        </view>
+      </view>
+
+      <!-- 评论列表 -->
+      <scroll-view class="comments-list" scroll-y>
+        <view v-if="comments.length === 0" class="no-comments">
+          <text>空谷回音，虚位以待...</text>
+        </view>
+        <view
+          v-for="comment in comments"
+          :key="comment.id"
+          class="comment-item"
+        >
+          <view class="comment-header">
+            <view class="comment-avatar">{{ getAvatar(comment.nickname) }}</view>
+            <view class="comment-user">{{ comment.nickname }}</view>
+            <view class="comment-time">{{ shortTime(comment.createdAt) }}</view>
+          </view>
+          <view class="comment-text">{{ comment.content }}</view>
+          <view class="comment-actions">
+            <view
+              class="comment-action-btn"
+              :class="{ 'liked': comment.liked }"
+              @click="handleCommentLike(comment)"
+            >
+              <text class="material-symbols-outlined">{{ comment.liked ? 'thumb_up' : 'thumb_up_off' }}</text>
+              <text class="comment-likes">{{ comment.likeCount || 0 }}</text>
+            </view>
+            <view class="comment-action-btn" @click="startReply(comment)">
+              <text class="material-symbols-outlined">reply</text>
+              <text>回复</text>
+            </view>
+          </view>
+
+          <!-- 嵌套回复 -->
+          <view v-if="comment.replies && comment.replies.length" class="replies-section">
+            <view v-for="reply in comment.replies" :key="reply.id" class="reply-item">
+              <view class="reply-header">
+                <view class="reply-avatar">{{ getAvatar(reply.nickname) }}</view>
+                <view class="reply-user">
+                  <text v-if="reply.replyToNickname" class="reply-to">回复</text>
+                  {{ reply.nickname }}
+                  <text v-if="reply.replyToNickname" class="reply-to">{{ reply.replyToNickname }}</text>
+                </view>
+                <view class="reply-time">{{ shortTime(reply.createdAt) }}</view>
+              </view>
+              <view class="reply-text">{{ reply.content }}</view>
+            </view>
+          </view>
+
+          <view
+            v-if="comment.replies && comment.replies.length"
+            class="show-replies-btn"
+            @click="toggleReplies(comment)"
+          >
+            <text class="icon" style="font-size: 14px;">expand_more</text>
+            <text>{{ comment.replies.length }} 条回复</text>
+          </view>
+        </view>
       </scroll-view>
 
-      <!-- 翻页按钮 -->
-      <view class="pagination-controls">
-        <button
-          class="page-btn prev-btn"
-          :disabled="!hasPrevChapter"
-          @click="prevChapter"
-        >
-          上一章
-        </button>
-        <button
-          class="page-btn next-btn"
-          :disabled="!hasNextChapter"
-          @click="nextChapter"
-        >
-          下一章
-        </button>
+      <!-- 回复对象提示 -->
+      <view v-if="replyTarget" class="reply-hint">
+        <text>回复 {{ replyTarget.nickname }}</text>
+        <text class="reply-cancel" @click="cancelReply">取消</text>
       </view>
-    </view>
 
-    <!-- 顶部工具栏 -->
-    <view class="toolbar top-toolbar">
-      <view class="toolbar-btn" @click="toggleChapterDrawer">
-        <text>📖</text>
-      </view>
-      <view class="toolbar-btn" @click="toggleSettings">
-        <text>⚙️</text>
-      </view>
-      <view class="toolbar-btn" @click="toggleZenMode">
-        <text>🧘</text>
-      </view>
-    </view>
-
-    <!-- 底部工具栏 -->
-    <view class="toolbar bottom-toolbar">
-      <view class="toolbar-btn" @click="toggleOrientation">
-        <text>{{ isHorizontal ? '竖' : '横' }}</text>
-      </view>
-      <view class="toolbar-btn" @click="toggleInterpretation">
-        <text>释义</text>
-      </view>
-      <view class="toolbar-btn" @click="toggleComments">
-        <text>💬</text>
-      </view>
-      <view class="toolbar-btn" @click="toggleFavorite">
-        <text>{{ currentChapter.favorited ? '★' : '☆' }}</text>
-      </view>
-    </view>
-
-    <!-- 章节抽屉 -->
-    <view class="chapter-drawer" :class="{ 'drawer-open': showChapterDrawer }">
-      <view class="drawer-mask" @click="toggleChapterDrawer"></view>
-      <view class="drawer-content">
-        <view class="drawer-header">
-          <text class="drawer-title">章节目录</text>
-          <text class="drawer-close" @click="toggleChapterDrawer">×</text>
+      <!-- 发表评论输入框 -->
+      <view class="comment-input-section">
+        <input
+          v-model="newComment"
+          :placeholder="replyTarget ? `回复 ${replyTarget.nickname}...` : '写下你的感悟，结个善缘...'"
+          class="comment-input"
+        />
+        <view class="send-btn" @click="sendComment">
+          <text class="icon" style="font-size: 20px;">send</text>
         </view>
-
-        <!-- 搜索框 -->
-        <view class="search-box">
-          <input
-            v-model="searchKeyword"
-            placeholder="搜索章节..."
-            class="search-input"
-            @input="handleSearch"
-          />
-        </view>
-
-        <!-- 章节列表 -->
-        <scroll-view scroll-y class="chapter-list">
-          <view
-            v-for="chapter in filteredChapters"
-            :key="chapter.id"
-            class="chapter-item"
-            :class="{ 'current-chapter': chapter.id === currentChapter.id }"
-            @click="selectChapter(chapter)"
-          >
-            <text class="chapter-num">第{{ chapter.id }}章</text>
-            <text class="chapter-name">{{ chapter.title }}</text>
-          </view>
-        </scroll-view>
-      </view>
-    </view>
-
-    <!-- 释义面板 -->
-    <view class="interpretation-panel" :class="{ 'panel-open': showInterpretation }">
-      <view class="panel-mask" @click="toggleInterpretation"></view>
-      <view class="panel-content">
-        <view class="panel-header">
-          <text class="panel-title">释义</text>
-          <text class="panel-close" @click="toggleInterpretation">×</text>
-        </view>
-        <scroll-view scroll-y class="interpretation-text">
-          <text>{{ currentChapter.interpretation }}</text>
-        </scroll-view>
       </view>
     </view>
 
     <!-- 设置面板 -->
-    <view class="settings-panel" :class="{ 'panel-open': showSettings }">
-      <view class="panel-mask" @click="toggleSettings"></view>
-      <view class="panel-content">
-        <view class="panel-header">
-          <text class="panel-title">修行设置</text>
-          <text class="panel-close" @click="toggleSettings">×</text>
+    <view class="settings-panel" :class="{ 'active': showSettings }">
+      <view class="panel-header">
+        <view class="panel-title">修行设置</view>
+        <view class="panel-close" @click="toggleSettings">
+          <text class="material-symbols-outlined">close</text>
         </view>
+      </view>
 
-        <!-- 配色方案 -->
-        <view class="settings-section">
-          <text class="section-title">配色方案</text>
-          <view class="color-schemes">
-            <view
-              v-for="scheme in colorSchemes"
-              :key="scheme.id"
-              class="scheme-item"
-              :class="{ 'scheme-active': currentScheme === scheme.id }"
-              :style="{ background: scheme.preview }"
-              @click="selectScheme(scheme.id)"
-            >
-              <text class="scheme-name">{{ scheme.name }}</text>
-            </view>
-          </view>
-        </view>
+      <!-- 入定模式快捷入口 -->
+      <view
+        class="upload-btn"
+        @click="toggleZenMode(); closeAllPanels()"
+        style="width: 100%; margin-bottom: 20px; padding: 15px; border: 1px solid rgba(212, 175, 55, 0.3); background: rgba(212, 175, 55, 0.05); color: #d4af37; border-radius: 12px; letter-spacing: 2px; text-align: center;"
+      >
+        <text class="material-symbols-outlined">self_improvement</text>
+        <text>进入入定模式</text>
+      </view>
 
-        <!-- 字体大小 -->
-        <view class="settings-section">
-          <text class="section-title">字体大小</text>
-          <view class="font-size-control">
-            <button class="size-btn" @click="decreaseFontSize">-</button>
-            <text class="size-display">{{ fontSize }}rpx</text>
-            <button class="size-btn" @click="increaseFontSize">+</button>
+      <!-- 配色方案 -->
+      <view class="settings-section">
+        <view class="section-title">配色方案</view>
+        <view class="color-schemes">
+          <view
+            v-for="scheme in colorSchemes"
+            :key="scheme.id"
+            class="scheme-item"
+            :class="{ 'scheme-active': currentScheme === scheme.id }"
+            :style="{ background: scheme.preview }"
+            @click="selectScheme(scheme.id)"
+          >
+            <text class="scheme-name">{{ scheme.name }}</text>
           </view>
         </view>
       </view>
-    </view>
 
-    <!-- 评论面板（简化版） -->
-    <view class="comments-panel" :class="{ 'panel-open': showComments }">
-      <view class="panel-mask" @click="toggleComments"></view>
-      <view class="panel-content">
-        <view class="panel-header">
-          <text class="panel-title">悟道留言</text>
-          <text class="panel-close" @click="toggleComments">×</text>
-        </view>
-
-        <!-- 评论列表 -->
-        <scroll-view scroll-y class="comments-list">
-          <view v-if="comments.length === 0" class="no-comments">
-            <text>暂无留言，快来分享你的感悟吧</text>
+      <!-- 字体大小 -->
+      <view class="settings-section">
+        <view class="section-title">字体大小</view>
+        <view class="font-size-control">
+          <view class="size-btn" @click="decreaseFontSize">
+            <text class="material-symbols-outlined">remove</text>
           </view>
-          <view
-            v-for="comment in comments"
-            :key="comment.id"
-            class="comment-item"
-          >
-            <view class="comment-header">
-              <text class="comment-nickname">{{ comment.nickname }}</text>
-              <text class="comment-time">{{ shortTime(comment.createdAt) }}</text>
-            </view>
-            <text class="comment-content">{{ comment.content }}</text>
-            <view class="comment-actions">
-              <text class="action-btn" @click="handleCommentLike(comment)">
-                {{ comment.liked ? '❤️' : '🤍' }} {{ comment.likeCount }}
-              </text>
-              <text class="action-btn" @click="startReply(comment)">💬 回复</text>
-            </view>
-
-            <!-- 嵌套回复 -->
-            <view v-if="comment.replies && comment.replies.length" class="reply-list">
-              <view v-for="reply in comment.replies" :key="reply.id" class="reply-item">
-                <view class="reply-header">
-                  <text class="reply-nickname">{{ reply.nickname }}</text>
-                  <text v-if="reply.replyToNickname" class="reply-to">回复 {{ reply.replyToNickname }}</text>
-                  <text class="reply-time">{{ shortTime(reply.createdAt) }}</text>
-                </view>
-                <text class="reply-content">{{ reply.content }}</text>
-              </view>
-            </view>
+          <text class="size-display">{{ fontSize }}</text>
+          <view class="size-btn" @click="increaseFontSize">
+            <text class="material-symbols-outlined">add</text>
           </view>
-        </scroll-view>
-
-        <!-- 回复对象提示 -->
-        <view v-if="replyTarget" class="reply-hint">
-          <text>回复 {{ replyTarget.nickname }}</text>
-          <text class="reply-cancel" @click="cancelReply">取消</text>
-        </view>
-
-        <!-- 发表评论输入框 -->
-        <view class="comment-input-section">
-          <input
-            v-model="newComment"
-            :placeholder="replyTarget ? `回复 ${replyTarget.nickname}...` : '分享你的感悟...'"
-            class="comment-input"
-          />
-          <button class="send-btn" @click="sendComment" :disabled="!canSendComment">
-            发送
-          </button>
         </view>
       </view>
     </view>
@@ -233,13 +291,52 @@
         <text>退出入定</text>
       </view>
     </view>
+    </template>
   </view>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { getChapters, getChapterDetail, getChapterComments, createComment, toggleCommentLike, addFavorite, removeFavorite, updateProgress } from '@/api'
+
+// 获取自定义 tabBar 实例（兼容H5和小程序）
+const getTabBar = () => {
+  try {
+    // H5环境下使用不同的方式获取tabBar
+    if (typeof uni.$getTabBar === 'function') {
+      const tabBar = uni.$getTabBar()
+      return tabBar?.children?.[0]?.component?.proxy
+    }
+    // H5环境备用方案：直接通过事件通信
+    return null
+  } catch (e) {
+    console.log('获取tabBar实例失败:', e)
+    return null
+  }
+}
+
+// 通知 tabBar 更新状态（兼容H5和小程序）
+const notifyTabBar = () => {
+  try {
+    // 优先尝试通过事件通知
+    uni.$emit('readingPageUpdate', {
+      favorited: currentChapter.value.favorited,
+      horizontal: isHorizontal.value
+    })
+
+    // 如果有tabBar实例，直接调用方法
+    const tabBar = getTabBar()
+    if (tabBar && tabBar.updateReadingState) {
+      tabBar.updateReadingState({
+        favorited: currentChapter.value.favorited,
+        horizontal: isHorizontal.value
+      })
+    }
+  } catch (e) {
+    console.log('通知tabBar失败（忽略）:', e)
+  }
+}
 
 const userStore = useUserStore()
 
@@ -253,6 +350,10 @@ const currentChapter = ref({
 })
 const allChapters = ref([])
 const searchKeyword = ref('')
+
+// 加载状态
+const isLoading = ref(true)
+const loadError = ref('')
 
 // 显示状态
 const showChapterDrawer = ref(false)
@@ -320,7 +421,9 @@ const loadChapters = async () => {
 // 加载章节详情
 const loadChapterDetail = async (chapterId) => {
   try {
+    console.log('开始加载章节详情:', chapterId)
     const result = await getChapterDetail(chapterId)
+    console.log('章节详情加载成功:', result)
     currentChapter.value = result
 
     // 更新阅读进度
@@ -331,8 +434,12 @@ const loadChapterDetail = async (chapterId) => {
 
     // 加载评论
     await loadComments(chapterId)
+
+    // 通知 tabBar 更新状态
+    notifyTabBar()
   } catch (error) {
     console.error('加载章节详情失败:', error)
+    throw error // 让错误向上传播，这样可以被统一的错误处理捕获
   }
 }
 
@@ -399,6 +506,8 @@ const toggleOrientation = () => {
   isHorizontal.value = !isHorizontal.value
   // 保存设置
   uni.setStorageSync('orientation', isHorizontal.value)
+  // 通知 tabBar 更新状态
+  notifyTabBar()
 }
 
 // 收藏切换
@@ -427,6 +536,8 @@ const toggleFavorite = async () => {
         icon: 'success'
       })
     }
+    // 通知 tabBar 更新状态
+    notifyTabBar()
   } catch (error) {
     console.error('收藏操作失败:', error)
   }
@@ -458,8 +569,39 @@ const handleSearch = () => {
   // 搜索逻辑在computed中处理
 }
 
+// 关闭所有面板
+const closeAllPanels = () => {
+  showChapterDrawer.value = false
+  showInterpretation.value = false
+  showComments.value = false
+  showSettings.value = false
+}
+
+// 跳转到个人中心
+const navigateToProfile = () => {
+  uni.navigateTo({
+    url: '/pages/profile/index'
+  })
+}
+
+// 获取头像字符（取昵称第一个字或随机字符）
+const getAvatar = (nickname) => {
+  if (!nickname) return '道'
+  const chars = ['道', '德', '经', '无', '为', '悟', '玄']
+  return nickname.charAt(0) || chars[Math.floor(Math.random() * chars.length)]
+}
+
 // 「2026-08-24 18:34」→「08-24 18:34」，面板窄，完整日期会被挤掉
 const shortTime = (t) => (t || '').slice(5)
+
+// 切换回复显示状态
+const toggleReplies = (comment) => {
+  if (!comment.showReplies) {
+    comment.showReplies = true
+  } else {
+    comment.showReplies = false
+  }
+}
 
 // 选中/取消回复对象
 const startReply = (comment) => {
@@ -537,471 +679,937 @@ const handleScrollToLower = () => {
 
 // 初始化
 onMounted(async () => {
-  // 恢复设置
-  const savedOrientation = uni.getStorageSync('orientation')
-  const savedFontSize = uni.getStorageSync('fontSize')
-  const savedScheme = uni.getStorageSync('colorScheme')
+  try {
+    console.log('阅读页面初始化开始')
+    isLoading.value = true
+    loadError.value = ''
 
-  if (savedOrientation !== undefined) isHorizontal.value = savedOrientation
-  if (savedFontSize) fontSize.value = savedFontSize
-  if (savedScheme) currentScheme.value = savedScheme
+    // 检查登录状态
+    if (!userStore.isLoggedIn()) {
+      uni.showToast({
+        title: '请先登录',
+        icon: 'none'
+      })
+      uni.reLaunch({
+        url: '/pages/login/index'
+      })
+      isLoading.value = false
+      return
+    }
 
-  // 加载数据
-  await loadChapters()
+    // 恢复设置
+    const savedOrientation = uni.getStorageSync('orientation')
+    const savedFontSize = uni.getStorageSync('fontSize')
+    const savedScheme = uni.getStorageSync('colorScheme')
 
-  // 获取当前用户阅读进度
-  const lastChapterId = userStore.userInfo?.lastChapterId || 1
-  await loadChapterDetail(lastChapterId)
+    if (savedOrientation !== undefined) isHorizontal.value = savedOrientation
+    if (savedFontSize) fontSize.value = savedFontSize
+    if (savedScheme) currentScheme.value = savedScheme
+
+    // 加载章节数据
+    await loadChapters()
+
+    // 获取页面参数，优先使用指定章节（兼容H5和小程序）
+    let targetChapterId = userStore.userInfo?.lastChapterId || 1
+
+    try {
+      // uni-app全局函数，不需要从Vue导入
+      const pages = getCurrentPages()
+      if (pages && pages.length > 0) {
+        const currentPage = pages[pages.length - 1]
+        const options = currentPage?.options || {}
+        if (options.chapterId) {
+          targetChapterId = parseInt(options.chapterId) || 1
+        }
+      }
+    } catch (e) {
+      console.log('获取页面参数失败，使用默认章节:', e)
+    }
+
+    console.log('目标章节ID:', targetChapterId)
+    await loadChapterDetail(targetChapterId)
+
+    // 通知 tabBar 更新状态
+    notifyTabBar()
+
+    console.log('阅读页面初始化完成')
+  } catch (error) {
+    console.error('阅读页面初始化失败:', error)
+    loadError.value = '连接服务器超时，请点击屏幕重试'
+  } finally {
+    isLoading.value = false
+  }
+
+  // 监听自定义 tabBar 的事件
+  uni.$on('prevChapter', () => {
+    prevChapter()
+  })
+
+  uni.$on('nextChapter', () => {
+    nextChapter()
+  })
+
+  uni.$on('toggleFavorite', () => {
+    toggleFavorite()
+  })
+
+  uni.$on('toggleOrientation', () => {
+    toggleOrientation()
+  })
+
+  uni.$on('toggleInterpretation', () => {
+    toggleInterpretation()
+  })
+
+  uni.$on('toggleComments', () => {
+    toggleComments()
+  })
+})
+
+// 重试加载
+const handleRetry = async () => {
+  try {
+    isLoading.value = true
+    loadError.value = ''
+
+    let targetChapterId = userStore.userInfo?.lastChapterId || 1
+
+    try {
+      const pages = getCurrentPages()
+      if (pages && pages.length > 0) {
+        const currentPage = pages[pages.length - 1]
+        const options = currentPage?.options || {}
+        if (options.chapterId) {
+          targetChapterId = parseInt(options.chapterId) || 1
+        }
+      }
+    } catch (e) {
+      console.log('获取页面参数失败，使用默认章节:', e)
+    }
+
+    await loadChapterDetail(targetChapterId)
+  } catch (error) {
+    console.error('重试加载失败:', error)
+    loadError.value = '连接服务器超时，请点击屏幕重试'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 监听页面卸载，移除事件监听
+onUnmounted(() => {
+  try {
+    uni.$off('prevChapter')
+    uni.$off('nextChapter')
+    uni.$off('toggleFavorite')
+    uni.$off('toggleOrientation')
+    uni.$off('toggleInterpretation')
+    uni.$off('toggleComments')
+  } catch (e) {
+    console.log('移除事件监听失败:', e)
+  }
 })
 </script>
 
 <style lang="scss" scoped>
 .reading-container {
   min-height: 100vh;
-  background: var(--bg-color, #0a0a0a);
-  color: var(--text-color, #e0e0e0);
-}
-
-// 上下工具栏都是 fixed，正文要自己让出这两条的高度，否则标题压在顶栏下、翻页按钮压在底栏下
-.chapter-content {
-  padding: 140rpx 40rpx;
-  min-height: 100vh;
-  box-sizing: border-box;
-  /* #ifdef H5 */
-  // H5 还要再让开页面内的 tabBar（约 50px）
-  padding-bottom: 240rpx;
-  /* #endif */
-
-  &.horizontal {
-    .chapter-text {
-      writing-mode: horizontal-tb;
-    }
-  }
-
-  &.vertical {
-    .chapter-text {
-      writing-mode: vertical-rl;
-      text-orientation: upright;
-      height: 100%;
-    }
-  }
-}
-
-.chapter-title {
-  text-align: center;
-  font-size: 40rpx;
-  font-weight: bold;
-  color: #d4af37;
-  margin-bottom: 60rpx;
-  letter-spacing: 4rpx;
-}
-
-// 100vh 减去：上下工具栏 + 正文内边距 + 标题 + 翻页按钮，让整页正好落在一屏里
-.content-scroll {
-  height: calc(100vh - 540rpx);
-  /* #ifdef H5 */
-  height: calc(100vh - 640rpx);
-  /* #endif */
-}
-
-.chapter-text {
-  font-size: 32rpx;
-  line-height: 2;
-  letter-spacing: 2rpx;
-  font-family: 'KaiTi', '楷体', serif;
-
-  .text-line {
-    display: block;
-    margin-bottom: 20rpx;
-  }
-}
-
-.pagination-controls {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 60rpx;
-  padding: 0 40rpx;
-
-  .page-btn {
-    width: 200rpx;
-    height: 80rpx;
-    background: rgba(212, 175, 55, 0.2);
-    border: 1px solid rgba(212, 175, 55, 0.5);
-    color: #d4af37;
-    border-radius: 8rpx;
-    font-size: 32rpx;
-
-    &:disabled {
-      opacity: 0.3;
-    }
-  }
-}
-
-.toolbar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-around;
-  padding: 20rpx;
-  background: rgba(26, 26, 26, 0.95);
-  border-top: 1px solid rgba(212, 175, 55, 0.2);
-  z-index: 100;
-
-  &.top-toolbar {
-    top: 0;
-  }
-
-  &.bottom-toolbar {
-    bottom: 0;
-    /* #ifdef H5 */
-    // H5 的 tabBar 是页面内的固定元素，会盖住 bottom:0 的工具栏；
-    // 小程序 tabBar 是原生的、不占页面视口，保持 bottom:0 即可
-    bottom: 50px;
-    /* #endif */
-  }
-
-  .toolbar-btn {
-    width: 80rpx;
-    height: 80rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40rpx;
-    border-radius: 50%;
-    transition: background 0.3s;
-
-    &:active {
-      background: rgba(212, 175, 55, 0.2);
-    }
-  }
-}
-
-// 抽屉和面板
-.chapter-drawer,
-.interpretation-panel,
-.settings-panel,
-.comments-panel {
-  position: fixed;
-  top: 0;
-  right: -750rpx;
-  bottom: 0;
-  width: 650rpx;
-  transition: right 0.3s;
-  z-index: 200;
-  /* #ifdef H5 */
-  // 让开 H5 页面内的 tabBar，否则面板底部的输入框会被盖住
-  bottom: 50px;
-  /* #endif */
-
-  &.drawer-open,
-  &.panel-open {
-    right: 0;
-
-    .drawer-mask,
-    .panel-mask {
-      opacity: 1;
-      pointer-events: auto;
-    }
-  }
-}
-
-// 遮罩是 fixed 定位，不随父面板一起滑出屏幕，所以必须自己隐藏：
-// 否则四个面板的遮罩会一直叠在阅读页上，把整页压暗到原亮度的 6%。
-.drawer-mask,
-.panel-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: -1;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s;
-}
-
-.drawer-content,
-.panel-content {
-  height: 100%;
-  background: #1a1a1a;
-  border-left: 1px solid rgba(212, 175, 55, 0.3);
+  background: radial-gradient(ellipse at center, rgb(40,40,40) 0%, #0e0e0e 100%);
+  color: #e2e2e2;
+  font-family: "KaiTi", "STKaiti", "KaiTi_GB2312", "Songti SC", serif;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-.drawer-header,
+.page-loading,
+.page-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at center, rgb(40,40,40) 0%, #0e0e0e 100%);
+  z-index: 1000;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(212, 175, 55, 0.2);
+  border-top-color: #d4af37;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 2px;
+}
+
+.error-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.error-icon .material-symbols-outlined {
+  font-size: 28px;
+  color: #ff6b6b;
+}
+
+.error-text {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+.retry-text {
+  font-size: 14px;
+  color: rgba(212, 175, 55, 0.7);
+  letter-spacing: 1px;
+}
+
+// 顶部导航
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 35px 25px 20px;
+  transition: all 0.6s ease;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.header-title {
+  flex: 1;
+}
+
+.logo {
+  font-size: 24px;
+  letter-spacing: 10px;
+  font-weight: 300;
+  color: rgba(248, 246, 242, 0.9);
+}
+
+.header-icons {
+  display: flex;
+  gap: 10px;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(255,255,255,0.03);
+  color: rgba(248, 246, 242, 0.8);
+}
+
+.icon-btn:active {
+  transform: scale(0.9);
+}
+
+// 主要内容区域
+.main-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  transition: all 0.6s ease;
+  padding: 20px 40px;
+  z-index: 10;
+  position: relative;
+}
+
+.chapter-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: auto;
+}
+
+// 章节标题
+.chapter-header {
+  text-align: center;
+  margin-bottom: 15px;
+  opacity: 0;
+  animation: fade-in 1.5s ease-out 0.3s forwards;
+}
+
+.chapter-num {
+  font-size: 11px;
+  color: rgba(212, 175, 55, 0.5);
+  letter-spacing: 3px;
+  margin-bottom: 20px;
+}
+
+.chapter-divider {
+  width: 35px;
+  height: 1px;
+  background: rgba(212, 175, 55, 0.25);
+  margin: 0 auto;
+}
+
+// 横向文字样式
+.chapter-content-horizontal {
+  font-size: 1.25rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: center;
+  letter-spacing: 0.25em;
+  opacity: 0;
+  animation: fade-in 2s ease-out 1s forwards;
+  padding: 0 2rem;
+  max-width: 90vw;
+}
+
+// 竖向文字样式
+.chapter-content-vertical {
+  font-size: 1.4rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: center;
+  letter-spacing: 0.35em;
+  opacity: 0;
+  animation: fade-in 2s ease-out 1s forwards;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  height: 55vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.25em;
+  padding: 2rem 0;
+}
+
+// 底部导航 - 已迁移到自定义tabBar
+.bottom-section {
+  display: none !important;
+}
+
+.nav-btn, .action-btn {
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 50%;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background: rgba(255,255,255,0.03);
+  color: rgba(232, 228, 220, 0.8);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-btn:active, .action-btn:active {
+  transform: scale(0.9);
+}
+
+.center-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.action-btn.active {
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.3);
+  box-shadow: 0 0 15px rgba(255, 107, 107, 0.2);
+}
+
+.action-btn.orientation.active {
+  color: #e2e2e2;
+  border-color: rgba(226, 226, 226, 0.3);
+  box-shadow: 0 0 15px rgba(226, 226, 226, 0.2);
+}
+
+// 章节导航面板
+.nav-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 320px;
+  max-width: 85vw;
+  z-index: 200;
+  transform: translateX(-100%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: rgba(14, 14, 14, 0.95);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+
+.nav-panel.active {
+  transform: translateX(0);
+}
+
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+
+.nav-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #d4af37;
+  letter-spacing: 2px;
+}
+
+.nav-search {
+  padding: 15px 20px;
+  flex-shrink: 0;
+}
+
+.nav-search-input {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: #e2e2e2;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.nav-search-input:focus {
+  border-color: rgba(212, 175, 55, 0.3);
+  background: rgba(255,255,255,0.05);
+}
+
+.nav-search-input::placeholder {
+  color: rgba(255,255,255,0.3);
+}
+
+.nav-content {
+  flex: 1;
+  min-height: 0;
+  padding: 0 20px 20px;
+  overflow-y: auto;
+}
+
+.nav-chapter-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 8px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.nav-chapter-item:active {
+  background: rgba(255,255,255,0.03);
+}
+
+.nav-chapter-item.active {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.2);
+}
+
+.nav-chapter-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d4af37;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.nav-chapter-item.active .nav-chapter-num {
+  background: rgba(212, 175, 55, 0.2);
+}
+
+.nav-chapter-title {
+  flex: 1;
+  font-size: 14px;
+  color: rgba(248, 246, 242, 0.8);
+  letter-spacing: 1px;
+}
+
+.nav-chapter-item.active .nav-chapter-title {
+  color: #d4af37;
+}
+
+.nav-footer {
+  padding: 15px 20px 20px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.nav-progress {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 1px;
+}
+
+// 解读面板
+.interpretation-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 80vh;
+  border-radius: 24px 24px 0 0;
+  z-index: 200;
+  transform: translateY(100%);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.interpretation-panel.active {
+  transform: translateY(0);
+}
+
+.panel-handle {
+  width: 40px;
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  margin: 15px auto;
+}
+
+.interpretation-content {
+  padding: 0 25px 30px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.interpretation-label {
+  font-size: 12px;
+  letter-spacing: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #d4af37;
+  opacity: 0.8;
+}
+
+.interpretation-text {
+  font-size: 15px;
+  line-height: 2.2;
+  margin-bottom: 30px;
+  color: #e8e4dc;
+  text-align: justify;
+}
+
+// 评论面板
+.comments-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 80vh;
+  border-radius: 24px 24px 0 0;
+  z-index: 200;
+  transform: translateY(100%);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.comments-panel.active {
+  transform: translateY(0);
+}
+
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 40rpx;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-
-  .drawer-title,
-  .panel-title {
-    font-size: 36rpx;
-    font-weight: bold;
-    color: #d4af37;
-  }
-
-  .drawer-close,
-  .panel-close {
-    font-size: 60rpx;
-    color: #666;
-  }
+  padding: 25px 25px 15px;
 }
 
-.search-box {
-  padding: 30rpx;
-
-  .search-input {
-    width: 100%;
-    height: 70rpx;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    border-radius: 8rpx;
-    padding: 0 30rpx;
-    color: #fff;
-    font-size: 28rpx;
-  }
+.panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f8f6f2;
 }
 
-.chapter-list {
-  flex: 1;
-  padding: 0 30rpx;
-
-  .chapter-item {
-    display: flex;
-    align-items: center;
-    padding: 30rpx;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-    &.current-chapter {
-      background: rgba(212, 175, 55, 0.1);
-    }
-
-    .chapter-num {
-      font-size: 28rpx;
-      color: #888;
-      margin-right: 20rpx;
-      width: 120rpx;
-    }
-
-    .chapter-name {
-      flex: 1;
-      font-size: 32rpx;
-    }
-  }
+.panel-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 14px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.05);
+  color: #f8f6f2;
 }
 
-.interpretation-text,
-.comments-list {
-  flex: 1;
-  padding: 40rpx;
-  // 不加 border-box 的话内边距会把滚动区撑出面板右缘，右侧文字（时间）被裁掉
-  box-sizing: border-box;
-
-  .interpretation-text-content {
-    font-size: 30rpx;
-    line-height: 1.8;
-    color: #ccc;
-  }
-}
-
-.comments-list {
-  .comment-item {
-    margin-bottom: 40rpx;
-    padding-bottom: 40rpx;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-    .comment-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20rpx;
-
-      .comment-nickname {
-        font-size: 28rpx;
-        color: #d4af37;
-      }
-
-      .comment-time {
-        font-size: 24rpx;
-        color: #666;
-      }
-    }
-
-    .comment-content {
-      font-size: 30rpx;
-      line-height: 1.6;
-      color: #e0e0e0;
-      display: block;
-      margin-bottom: 20rpx;
-    }
-
-    .comment-actions {
-      display: flex;
-      align-items: center;
-      gap: 32rpx;
-
-      .action-btn {
-        font-size: 28rpx;
-        color: #888;
-      }
-    }
-
-    // 嵌套回复：靠左侧竖线和缩进和顶级留言区分开
-    .reply-list {
-      margin-top: 20rpx;
-      padding-left: 24rpx;
-      border-left: 2rpx solid rgba(212, 175, 55, 0.3);
-
-      .reply-item {
-        padding: 12rpx 0;
-      }
-
-      .reply-header {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 12rpx;
-        margin-bottom: 6rpx;
-      }
-
-      .reply-nickname {
-        font-size: 26rpx;
-        color: #d4af37;
-      }
-
-      .reply-to,
-      .reply-time {
-        font-size: 24rpx;
-        color: #888;
-      }
-
-      .reply-content {
-        display: block;
-        font-size: 28rpx;
-        color: #ccc;
-        line-height: 1.6;
-      }
-    }
-  }
-
-  .no-comments {
-    text-align: center;
-    padding: 100rpx 0;
-    color: #666;
-    font-size: 28rpx;
-  }
-}
-
-.reply-hint {
+// 评论区
+.comments-header {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: #f8f6f2;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16rpx 30rpx;
-  background: rgba(212, 175, 55, 0.1);
-  font-size: 26rpx;
+  gap: 10px;
+}
+
+.comment-item {
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.comment-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a2a3a, #2a1a2a);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #d4af37;
-
-  .reply-cancel {
-    color: #888;
-  }
+  font-size: 14px;
 }
 
-.comment-input-section {
+.comment-user {
+  font-size: 14px;
+  font-weight: 500;
+  color: #e8e4dc;
+}
+
+.comment-time {
+  font-size: 12px;
+  margin-left: auto;
+  color: rgba(255,255,255,0.4);
+}
+
+.comment-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.8);
+}
+
+.comment-actions {
   display: flex;
   align-items: center;
-  padding: 30rpx;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 20px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
 
-  .comment-input {
-    flex: 1;
-    height: 70rpx;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    border-radius: 8rpx;
-    padding: 0 20rpx;
-    color: #fff;
-    font-size: 28rpx;
-    margin-right: 20rpx;
-  }
+.comment-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  transition: all 0.2s;
+  padding: 0;
+}
 
-  .send-btn {
-    width: 120rpx;
-    height: 70rpx;
-    background: linear-gradient(135deg, #d4af37 0%, #aa8a2c 100%);
-    border: none;
-    border-radius: 8rpx;
-    color: #000;
-    font-size: 28rpx;
+.comment-action-btn:active {
+  color: rgba(255,255,255,0.7);
+}
 
-    &:disabled {
-      opacity: 0.5;
-    }
-  }
+.comment-action-btn.liked {
+  color: #d4af37;
+}
+
+.comment-likes {
+  font-size: 12px;
+}
+
+// 回复样式
+.replies-section {
+  margin-top: 12px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(255,255,255,0.08);
+}
+
+.reply-item {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+}
+
+.reply-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.reply-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a2a3a, #2a1a2a);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d4af37;
+  font-size: 10px;
+}
+
+.reply-user {
+  font-size: 12px;
+  font-weight: 500;
+  color: #e8e4dc;
+}
+
+.reply-time {
+  font-size: 11px;
+  margin-left: auto;
+  color: rgba(255,255,255,0.3);
+}
+
+.reply-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.7);
+}
+
+.reply-to {
+  color: rgba(212, 175, 55, 0.7);
+  font-weight: 500;
+}
+
+.reply-input-area {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.reply-input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  font-size: 12px;
+  outline: none;
+  color: #e2e2e2;
+}
+
+.reply-input::placeholder {
+  color: rgba(255,255,255,0.25);
+}
+
+.reply-send-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #d4af37;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.reply-send-btn:active {
+  background: rgba(212,175,55,0.15);
+}
+
+.show-replies-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: rgba(212, 175, 55, 0.7);
+  margin-top: 8px;
+  padding: 0;
+}
+
+.show-replies-btn:active {
+  color: #d4af37;
+}
+
+.comment-input-area {
+  position: sticky;
+  bottom: 0;
+  padding: 15px 0 5px;
+  display: flex;
+  gap: 12px;
+  background: linear-gradient(0deg, rgba(15,20,25,1) 60%, rgba(15,20,25,0));
+}
+
+.comment-input {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  font-size: 14px;
+  outline: none;
+  color: #e2e2e2;
+}
+
+.comment-input::placeholder {
+  color: rgba(255,255,255,0.25);
+}
+
+.send-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #d4af37;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.send-btn:active {
+  transform: scale(0.9);
+  background: rgba(212,175,55,0.2);
+}
+
+// 设置面板
+.settings-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 24px 24px 0 0;
+  padding: 25px 20px 35px;
+  z-index: 200;
+  transform: translateY(100%);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.settings-panel.active {
+  transform: translateY(0);
 }
 
 .settings-section {
-  padding: 40rpx;
+  padding: 16px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 16px;
+  margin-bottom: 15px;
+}
 
-  .section-title {
-    font-size: 32rpx;
-    color: #d4af37;
-    margin-bottom: 30rpx;
-    display: block;
-  }
+.section-title {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 10px;
+}
 
-  .color-schemes {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20rpx;
+.color-schemes {
+  display: flex;
+  gap: 12px;
+}
 
-    .scheme-item {
-      width: 120rpx;
-      height: 120rpx;
-      border-radius: 12rpx;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid transparent;
-      position: relative;
+.scheme-item {
+  flex: 1;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
 
-      &.scheme-active {
-        border-color: #d4af37;
-      }
+.scheme-item:active {
+  transform: scale(0.95);
+}
 
-      .scheme-name {
-        font-size: 24rpx;
-        color: #fff;
-      }
-    }
-  }
+.scheme-item.scheme-active {
+  border-color: #d4af37;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+}
 
-  .font-size-control {
-    display: flex;
-    align-items: center;
-    gap: 30rpx;
-
-    .size-btn {
-      width: 60rpx;
-      height: 60rpx;
-      background: rgba(212, 175, 55, 0.2);
-      border: 1px solid rgba(212, 175, 55, 0.5);
-      color: #d4af37;
-      border-radius: 8rpx;
-      font-size: 32rpx;
-    }
-
-    .size-display {
-      font-size: 32rpx;
-      color: #d4af37;
-      min-width: 100rpx;
-      text-align: center;
-    }
-  }
+.scheme-name {
+  font-size: 12px;
+  color: #fff;
 }
 
 // 入定模式
@@ -1011,7 +1619,7 @@ onMounted(async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(10, 10, 10, 0.95);
+  background: rgba(10, 10, 10, 0.98);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1020,39 +1628,53 @@ onMounted(async () => {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.5s;
+}
 
-  &.zen-active {
-    opacity: 1;
-    pointer-events: auto;
+.zen-mode.zen-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.zen-content {
+  text-align: center;
+}
+
+.zen-text {
+  display: block;
+  font-size: 48rpx;
+  color: #d4af37;
+  margin-bottom: 40rpx;
+  letter-spacing: 8rpx;
+}
+
+.zen-subtitle {
+  display: block;
+  font-size: 32rpx;
+  color: #888;
+  letter-spacing: 4rpx;
+}
+
+.zen-close {
+  margin-top: 100rpx;
+  padding: 20rpx 60rpx;
+  background: rgba(212, 175, 55, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  border-radius: 50rpx;
+  color: #d4af37;
+  font-size: 28rpx;
+}
+
+// 入定模式下隐藏工具栏
+.reading-container:has(.zen-mode.zen-active) {
+  .header,
+  .bottom-section {
+    opacity: 0;
+    pointer-events: none;
   }
+}
 
-  .zen-content {
-    text-align: center;
-
-    .zen-text {
-      display: block;
-      font-size: 60rpx;
-      color: #d4af37;
-      margin-bottom: 40rpx;
-      letter-spacing: 8rpx;
-    }
-
-    .zen-subtitle {
-      display: block;
-      font-size: 32rpx;
-      color: #888;
-      letter-spacing: 4rpx;
-    }
-  }
-
-  .zen-close {
-    margin-top: 100rpx;
-    padding: 20rpx 60rpx;
-    background: rgba(212, 175, 55, 0.2);
-    border: 1px solid rgba(212, 175, 55, 0.5);
-    border-radius: 50rpx;
-    color: #d4af37;
-    font-size: 28rpx;
-  }
+// 翻页控制
+.pagination-controls {
+  display: none; // 使用底部按钮替代
 }
 </style>
