@@ -1,5 +1,7 @@
 <template>
-  <view class="profile-container">
+  <view class="profile-container" :class="theme.themeClass">
+    <!-- 自定义背景层 -->
+    <CustomBackground />
     <!-- 背景光晕 -->
     <view class="ambient-glow"></view>
 
@@ -60,13 +62,6 @@
 
       <!-- 底部工具 -->
       <section class="footer-utilities">
-        <view class="footer-link" @click="navigateToSettings">
-          <view class="footer-link-left">
-            <text class="material-symbols-outlined">settings</text>
-            <text class="footer-link-text">修行设置与隐私</text>
-          </view>
-          <text class="material-symbols-outlined footer-link-arrow">chevron_right</text>
-        </view>
         <view class="footer-link">
           <view class="footer-link-left">
             <text class="material-symbols-outlined">help</text>
@@ -99,8 +94,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
+import { useThemeStore } from '@/store/theme'
+import CustomBackground from '@/components/CustomBackground.vue'
 
 const userStore = useUserStore()
+const theme = useThemeStore()
 
 // 初始化用户状态
 onMounted(() => {
@@ -188,14 +186,6 @@ const navigateToLogin = () => {
   })
 }
 
-// 导航到设置页
-const navigateToSettings = () => {
-  uni.showToast({
-    title: '设置页面开发中',
-    icon: 'none'
-  })
-}
-
 // 退出登录
 const handleLogout = () => {
   uni.showModal({
@@ -238,8 +228,8 @@ const checkLogin = () => {
 <style lang="scss" scoped>
 .profile-container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
-  color: #e2e2e2;
+  background: var(--page-bg-alt);
+  color: var(--text-1);
   font-family: "KaiTi", "STKaiti", "KaiTi_GB2312", "Songti SC", serif;
   display: flex;
   flex-direction: column;
@@ -262,18 +252,18 @@ const checkLogin = () => {
   z-index: 1;
 }
 
-// 背景光晕
+// 背景光晕（位于自定义背景层之上、内容之下）
 .ambient-glow {
   position: absolute;
   top: 0;
   right: 0;
   width: 256px;
   height: 256px;
-  background: rgba(212, 175, 55, 0.05);
+  background: var(--accent-05);
   border-radius: 50%;
   filter: blur(100px);
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
 // 个人资料部分
@@ -295,13 +285,13 @@ const checkLogin = () => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  border: 0.5px solid rgba(212, 175, 55, 0.5);
+  border: 0.5px solid var(--accent-strong);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2px;
-  background: rgba(42, 42, 42, 0.6);
+  background: var(--surface-card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   transition: transform 0.3s ease;
@@ -315,7 +305,7 @@ const checkLogin = () => {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: rgba(26, 26, 26, 1);
+  background: var(--bg-flat);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -324,7 +314,7 @@ const checkLogin = () => {
 
 .avatar-char {
   font-size: 36px;
-  color: #d4af37;
+  color: var(--accent);
   font-weight: bold;
 }
 
@@ -337,7 +327,7 @@ const checkLogin = () => {
 
 .profile-name-new {
   font-size: 22px;
-  color: rgba(229, 226, 225, 1);
+  color: var(--text-1);
   letter-spacing: 0.1em;
   margin-top: 8px;
 }
@@ -346,18 +336,18 @@ const checkLogin = () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-1);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 999px;
   padding: 6px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
 }
 
 .profile-status-text {
   font-size: 12px;
   letter-spacing: 0.02em;
-  color: rgba(226, 226, 226, 1);
+  color: var(--text-1);
   font-weight: 500;
 }
 
@@ -386,40 +376,40 @@ const checkLogin = () => {
   justify-content: center;
   gap: 4px;
   padding: 8px;
-  background: rgba(26, 26, 26, 0.6);
+  background: var(--surface-card);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .menu-card:active {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-2);
   transform: scale(0.95);
 }
 
 .icon {
   font-size: 18px;
-  color: rgba(226, 226, 226, 1);
+  color: var(--text-1);
   transition: color 0.3s ease;
 }
 
 .menu-card:active .icon {
-  color: #d4af37;
+  color: var(--accent);
 }
 
 .menu-card-text {
   font-size: 12px;
   letter-spacing: 0.02em;
-  color: rgba(226, 226, 226, 1);
+  color: var(--text-1);
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
 .menu-card:active .menu-card-text {
-  color: rgba(229, 226, 225, 1);
+  color: var(--text-1);
 }
 
 // 列表菜单项
@@ -429,17 +419,17 @@ const checkLogin = () => {
   justify-content: space-between;
   padding: 0 24px;
   height: 72px;
-  background: rgba(26, 26, 26, 0.6);
+  background: var(--surface-card);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .list-menu-item:active {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-2);
 }
 
 .list-menu-item.disabled {
@@ -459,18 +449,18 @@ const checkLogin = () => {
 
 .list-menu-text {
   font-size: 15px;
-  color: rgba(226, 226, 226, 1);
+  color: var(--text-1);
   letter-spacing: 0.1em;
 }
 
 .list-menu-arrow {
-  color: rgba(226, 226, 226, 0.5);
+  color: var(--text-3);
   font-size: 18px;
   transition: color 0.3s ease;
 }
 
 .list-menu-item:active .list-menu-arrow {
-  color: rgba(226, 226, 226, 1);
+  color: var(--text-1);
 }
 
 // 底部工具
@@ -491,15 +481,15 @@ const checkLogin = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: rgba(226, 226, 226, 0.7);
+  color: var(--text-2);
   transition: color 0.3s ease;
   padding: 12px;
   border-radius: 12px;
 }
 
 .footer-link:active {
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(229, 226, 225, 1);
+  background: var(--surface-2);
+  color: var(--text-1);
 }
 
 .footer-link-left {
@@ -538,10 +528,10 @@ const checkLogin = () => {
 .login-btn {
   width: 100%;
   padding: 16px;
-  background: rgba(212, 175, 55, 0.1);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: var(--accent-15);
+  border: 1px solid var(--accent-30);
   border-radius: 12px;
-  color: #d4af37;
+  color: var(--accent);
   font-size: 15px;
   font-weight: 500;
   letter-spacing: 2px;
@@ -549,6 +539,6 @@ const checkLogin = () => {
 }
 
 .login-btn:active {
-  background: rgba(212, 175, 55, 0.2);
+  background: var(--accent-30);
 }
 </style>

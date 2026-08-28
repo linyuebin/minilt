@@ -1,10 +1,13 @@
 <template>
   <view
     class="reading-container"
-    :class="{ 'is-zen': zenMode }"
+    :class="[theme.themeClass, { 'is-zen': zenMode }]"
     @touchstart="handleTouchStart"
     @touchend="handleTouchEnd"
   >
+    <!-- 自定义背景层 -->
+    <CustomBackground />
+
     <!-- 加载状态 -->
     <view v-if="isLoading" class="page-loading">
       <view class="loading-spinner"></view>
@@ -33,7 +36,9 @@
           <view class="chapter-num">第{{ currentChapter.id }}章</view>
           <view class="chapter-divider"></view>
         </view>
-        <view class="header-side header-side-right"></view>
+        <view class="header-side header-side-right">
+          <!-- 右侧占位，保持标题居中 -->
+        </view>
       </view>
 
       <!-- 主要内容：屏幕中间显示经文 -->
@@ -42,12 +47,38 @@
           <view
             class="chapter-text"
             :class="isHorizontal ? 'chapter-content-horizontal' : 'chapter-content-vertical'"
+            :style="{ fontSize: fontSize + 'px' }"
           >
             <text class="text-line" v-for="(line, index) in displayLines" :key="index">
               {{ line }}
             </text>
           </view>
         </view>
+
+        <!-- 仿真翻页：整页翻起的旧章纸页（正面旧内容 / 背面纸背），新章从下方露出 -->
+        <view
+          v-if="flipStage === 'out'"
+          class="flip-sheet"
+          :class="flipDir === 'forward' ? 'sheet-forward' : 'sheet-back'"
+        >
+          <view class="flip-sheet-front">
+            <view
+              class="chapter-text"
+              :class="isHorizontal ? 'chapter-content-horizontal' : 'chapter-content-vertical'"
+              :style="{ fontSize: fontSize + 'px' }"
+            >
+              <text class="text-line" v-for="(line, index) in flippingLines" :key="index">
+                {{ line }}
+              </text>
+            </view>
+            <view class="flip-sheet-shade"></view>
+          </view>
+          <view class="flip-sheet-back"></view>
+        </view>
+
+        <!-- 仿真翻页：左右点击热区（透明层，仅承担点击翻页） -->
+        <view v-if="showTapZones" class="tap-zone tap-zone-left" @click.stop="prevChapter"></view>
+        <view v-if="showTapZones" class="tap-zone tap-zone-right" @click.stop="nextChapter"></view>
       </view>
 
       <!-- 入定模式：底部上划提示 -->
@@ -56,31 +87,28 @@
         <text class="zen-hint-text">上划退出入定</text>
       </view>
 
-      <!-- 底部工具栏：左下目录 / 中间横竖排 / 右下释义，入定模式下收起 -->
+      <!-- 底部工具栏：目录 / 横竖排 / 释义 / 修行设置，四键均匀分布，入定模式下收起 -->
       <view class="bottom-toolbar" :class="{ 'toolbar-hidden': zenMode }">
-        <view class="toolbar-side">
-          <view class="action-btn" @click.stop="toggleChapterDrawer">
-            <text class="material-symbols-outlined">menu</text>
-          </view>
+        <view class="action-btn" @click.stop="toggleChapterDrawer">
+          <text class="material-symbols-outlined">menu</text>
         </view>
-        <view class="toolbar-center">
-          <view
-            class="action-btn"
-            :class="{ 'active': !isHorizontal }"
-            @click.stop="toggleOrientation"
-          >
-            <text class="material-symbols-outlined">rotate_90_degrees_ccw</text>
-          </view>
+        <view
+          class="action-btn"
+          :class="{ 'active': !isHorizontal }"
+          @click.stop="toggleOrientation"
+        >
+          <text class="material-symbols-outlined">rotate_90_degrees_ccw</text>
         </view>
-        <view class="toolbar-side toolbar-side-right">
-          <view class="action-btn" @click.stop="toggleInterpretation">
-            <text class="material-symbols-outlined">visibility</text>
-          </view>
+        <view class="action-btn" @click.stop="toggleInterpretation">
+          <text class="material-symbols-outlined">visibility</text>
+        </view>
+        <view class="action-btn" @click.stop="toggleSettings">
+          <text class="material-symbols-outlined">settings</text>
         </view>
       </view>
 
     <!-- 遮罩层 -->
-    <view class="overlay" :class="{ 'active': showChapterDrawer || showInterpretation || showSettings }" @click="closeAllPanels"></view>
+    <view class="overlay" :class="{ 'active': showChapterDrawer || showInterpretation }" @click="closeAllPanels"></view>
 
     <!-- 章节导航面板 -->
     <view class="nav-panel" :class="{ 'active': showChapterDrawer }">
@@ -221,34 +249,9 @@
       </view>
     </view>
 
-    <!-- 设置面板 -->
-    <view class="settings-panel" :class="{ 'active': showSettings }">
-      <view class="panel-header">
-        <view class="panel-title">修行设置</view>
-        <view class="panel-close" @click="toggleSettings">
-          <text class="material-symbols-outlined">close</text>
-        </view>
-      </view>
-
-      <!-- 配色方案 -->
-      <view class="settings-section">
-        <view class="section-title">配色方案</view>
-        <view class="color-schemes">
-          <view
-            v-for="scheme in colorSchemes"
-            :key="scheme.id"
-            class="scheme-item"
-            :class="{ 'scheme-active': currentScheme === scheme.id }"
-            :style="{ background: scheme.preview }"
-            @click="selectScheme(scheme.id)"
-          >
-            <text class="scheme-name">{{ scheme.name }}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 字体大小 -->
-      <view class="settings-section">
+    <!-- 修行设置面板（共享组件 + 阅读专属的字体大小区块） -->
+    <ThemePanel v-model:show="showSettings" @reset="resetFontSize">
+      <template #extra>
         <view class="section-title">字体大小</view>
         <view class="font-size-control">
           <view class="size-btn" @click="decreaseFontSize">
@@ -259,8 +262,22 @@
             <text class="material-symbols-outlined">add</text>
           </view>
         </view>
-      </view>
-    </view>
+
+        <view class="section-title page-mode-title">翻页方式</view>
+        <view class="page-mode-control">
+          <view
+            class="mode-btn"
+            :class="{ 'mode-active': pageMode === 'swipe' }"
+            @click="setPageMode('swipe')"
+          >左右滑动</view>
+          <view
+            class="mode-btn"
+            :class="{ 'mode-active': pageMode === 'curl' }"
+            @click="setPageMode('curl')"
+          >仿真翻页</view>
+        </view>
+      </template>
+    </ThemePanel>
     </template>
   </view>
 </template>
@@ -268,9 +285,13 @@
 <script setup>
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useUserStore } from '@/store/user'
+import { useThemeStore } from '@/store/theme'
+import ThemePanel from '@/components/ThemePanel.vue'
+import CustomBackground from '@/components/CustomBackground.vue'
 import { getChapters, getChapterDetail, getChapterComments, createComment, toggleCommentLike, updateProgress } from '@/api'
 
 const userStore = useUserStore()
+const theme = useThemeStore()
 
 // 章节相关
 const currentChapter = ref({
@@ -294,16 +315,21 @@ const zenMode = ref(true)
 
 // 阅读设置
 const isHorizontal = ref(true)
-const fontSize = ref(32)
-const currentScheme = ref('ink')
+// 字体大小（px）：与经文原 1.25rem 基准一致，范围 14-30；旧版遗留的越界值会在恢复时归位
+const FONT_MIN = 14
+const FONT_MAX = 30
+const FONT_DEFAULT = 20
+const fontSize = ref(FONT_DEFAULT)
 
-const colorSchemes = [
-  { id: 'ink', name: '水墨', preview: '#2d2d2d' },
-  { id: 'warm', name: '暖色', preview: '#4a3728' },
-  { id: 'forest', name: '森林', preview: '#0a1a0a' },
-  { id: 'night', name: '夜色', preview: '#050510' },
-  { id: 'parchment', name: '宣纸', preview: '#d4c4a8' }
-]
+// 翻页方式：'swipe' 左右滑动（默认）| 'curl' 仿真翻页（点击热区 + 翻书动画）
+const pageMode = ref('swipe')
+// 仿真翻页动画状态：flipStage '' | 'out'（纸页翻起中）；flipDir 'forward' | 'back'
+const flipStage = ref('')
+const flipDir = ref('')
+const isFlipping = computed(() => flipStage.value !== '')
+// 翻起纸页上的旧章快照 / 底层提前渲染的新章
+const flippingChapter = ref(null)
+const pendingChapter = ref(null)
 
 // 评论相关
 const comments = ref([])
@@ -323,9 +349,20 @@ const filteredChapters = computed(() => {
   )
 })
 
+// 翻页进行中时，底层内容提前切换为已就绪的新章（从翻起的纸页下方露出）
+const displayChapter = computed(() =>
+  flipStage.value === 'out' && pendingChapter.value ? pendingChapter.value : currentChapter.value
+)
+
 const displayLines = computed(() => {
-  if (!currentChapter.value.content) return []
-  return currentChapter.value.content.split('。').filter(line => line.trim())
+  if (!displayChapter.value.content) return []
+  return displayChapter.value.content.split('。').filter(line => line.trim())
+})
+
+// 翻起的纸页上渲染旧章内容快照
+const flippingLines = computed(() => {
+  if (!flippingChapter.value || !flippingChapter.value.content) return []
+  return flippingChapter.value.content.split('。').filter(line => line.trim())
 })
 
 const anyPanelOpen = computed(() =>
@@ -334,6 +371,11 @@ const anyPanelOpen = computed(() =>
 
 const hasPrevChapter = computed(() => currentChapter.value.id > 1)
 const hasNextChapter = computed(() => currentChapter.value.id < 81)
+
+// 点击热区仅在仿真翻页、非入定、无面板弹层时启用
+const showTapZones = computed(() =>
+  pageMode.value === 'curl' && !zenMode.value && !anyPanelOpen.value
+)
 
 const canSendComment = computed(() => {
   return newComment.value.trim() && userStore.isLoggedIn()
@@ -386,15 +428,60 @@ const selectChapter = async (chapter) => {
   toggleChapterDrawer()
 }
 
-// 上一章 / 下一章（由左右滑手势触发）
-const prevChapter = async () => {
+// 上一章 / 下一章（左右滑手势与点击热区统一入口；仿真模式播放翻页动画）
+const prevChapter = () => {
   if (!hasPrevChapter.value) return
-  await loadChapterDetail(currentChapter.value.id - 1)
+  flipToChapter(currentChapter.value.id - 1, 'back')
 }
 
-const nextChapter = async () => {
+const nextChapter = () => {
   if (!hasNextChapter.value) return
-  await loadChapterDetail(currentChapter.value.id + 1)
+  flipToChapter(currentChapter.value.id + 1, 'forward')
+}
+
+// 仿真翻页动画时长（毫秒），与 CSS 动画时长保持一致
+const FLIP_MS = 700
+let flipTimer = null
+
+// 按翻页方式切换章节：滑动模式直接加载；仿真模式旧章纸页整页翻起，新章从下方露出
+const flipToChapter = async (chapterId, dir) => {
+  if (isFlipping.value) return
+  if (pageMode.value !== 'curl') {
+    await loadChapterDetail(chapterId)
+    return
+  }
+  flippingChapter.value = { ...currentChapter.value }
+  flipDir.value = dir
+  flipStage.value = 'out'
+  try {
+    // 数据加载与翻页动画并行；用 setTimeout 对齐动画节奏（小程序端 animationend 事件名不一致）
+    const [detail] = await Promise.all([
+      getChapterDetail(chapterId).then((result) => {
+        // 新章内容就绪即渲染到底层，翻页过程中从纸页下方逐渐露出
+        pendingChapter.value = result
+        return result
+      }),
+      new Promise((resolve) => { flipTimer = setTimeout(resolve, FLIP_MS) })
+    ])
+    // 纸页翻落、新章就绪：提交新章并收尾
+    currentChapter.value = detail
+    if (userStore.isLoggedIn()) {
+      await updateProgress(chapterId)
+      userStore.updateProgress(chapterId)
+    }
+    flippingChapter.value = null
+    pendingChapter.value = null
+    flipStage.value = ''
+    // 评论不阻塞翻页收尾
+    loadComments(chapterId)
+  } catch (error) {
+    // 失败复位动画状态，保留旧章内容
+    flippingChapter.value = null
+    pendingChapter.value = null
+    flipStage.value = ''
+    flipTimer = null
+    throw error
+  }
 }
 
 // 章节抽屉
@@ -508,25 +595,31 @@ const toggleOrientation = () => {
   uni.setStorageSync('orientation', isHorizontal.value)
 }
 
-// 配色方案选择
-const selectScheme = (schemeId) => {
-  currentScheme.value = schemeId
-  uni.setStorageSync('colorScheme', schemeId)
-}
-
 // 字体大小控制
 const increaseFontSize = () => {
-  if (fontSize.value < 48) {
+  if (fontSize.value < FONT_MAX) {
     fontSize.value += 2
     uni.setStorageSync('fontSize', fontSize.value)
   }
 }
 
 const decreaseFontSize = () => {
-  if (fontSize.value > 24) {
+  if (fontSize.value > FONT_MIN) {
     fontSize.value -= 2
     uni.setStorageSync('fontSize', fontSize.value)
   }
+}
+
+// 重置字体大小（修行设置面板"重置为默认设置"时触发）
+const resetFontSize = () => {
+  fontSize.value = FONT_DEFAULT
+  uni.setStorageSync('fontSize', fontSize.value)
+}
+
+// 切换翻页方式并持久化
+const setPageMode = (mode) => {
+  pageMode.value = mode
+  uni.setStorageSync('pageMode', mode)
 }
 
 // 搜索处理
@@ -686,14 +779,20 @@ onMounted(async () => {
       return
     }
 
-    // 恢复设置
+    // 恢复设置（配色方案与自定义背景由主题 store 在应用启动时恢复）
     const savedOrientation = uni.getStorageSync('orientation')
-    const savedFontSize = uni.getStorageSync('fontSize')
-    const savedScheme = uni.getStorageSync('colorScheme')
+    const savedFontSize = Number(uni.getStorageSync('fontSize'))
 
     if (savedOrientation !== undefined) isHorizontal.value = savedOrientation
-    if (savedFontSize) fontSize.value = savedFontSize
-    if (savedScheme) currentScheme.value = savedScheme
+    if (savedFontSize >= FONT_MIN && savedFontSize <= FONT_MAX && savedFontSize % 2 === 0) {
+      fontSize.value = savedFontSize
+    } else {
+      uni.setStorageSync('fontSize', fontSize.value)
+    }
+
+    // 恢复翻页方式（非法值回落默认的左右滑动）
+    const savedPageMode = uni.getStorageSync('pageMode')
+    if (savedPageMode === 'swipe' || savedPageMode === 'curl') pageMode.value = savedPageMode
 
     // 加载章节数据
     await loadChapters()
@@ -773,6 +872,10 @@ const handleRetry = async () => {
 // 监听页面卸载，移除事件监听
 onUnmounted(() => {
   stopZenIdleTimer()
+  if (flipTimer) {
+    clearTimeout(flipTimer)
+    flipTimer = null
+  }
   try {
     uni.$off('toggleChapterDrawer')
     uni.$off('toggleOrientation')
@@ -786,8 +889,8 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .reading-container {
   min-height: 100vh;
-  background: radial-gradient(ellipse at center, rgb(40,40,40) 0%, #0e0e0e 100%);
-  color: #e2e2e2;
+  background: var(--page-bg);
+  color: var(--text-1);
   font-family: "KaiTi", "STKaiti", "KaiTi_GB2312", "Songti SC", serif;
   display: flex;
   flex-direction: column;
@@ -807,15 +910,15 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(ellipse at center, rgb(40,40,40) 0%, #0e0e0e 100%);
+  background: var(--page-bg);
   z-index: 1000;
 }
 
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 3px solid rgba(212, 175, 55, 0.2);
-  border-top-color: #d4af37;
+  border: 3px solid var(--accent-15);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 20px;
@@ -827,7 +930,7 @@ onUnmounted(() => {
 
 .loading-text {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-2);
   letter-spacing: 2px;
 }
 
@@ -850,14 +953,14 @@ onUnmounted(() => {
 
 .error-text {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-2);
   margin-bottom: 10px;
   letter-spacing: 1px;
 }
 
 .retry-text {
   font-size: 14px;
-  color: rgba(212, 175, 55, 0.7);
+  color: var(--accent-strong);
   letter-spacing: 1px;
 }
 
@@ -895,15 +998,15 @@ onUnmounted(() => {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
   font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: rgba(255,255,255,0.03);
-  color: rgba(248, 246, 242, 0.8);
+  background: var(--surface-1);
+  color: var(--text-2);
 }
 
 .icon-btn:active {
@@ -916,7 +1019,7 @@ onUnmounted(() => {
 
 .chapter-num {
   font-size: 13px;
-  color: rgba(212, 175, 55, 0.75);
+  color: var(--accent-strong);
   letter-spacing: 3px;
   white-space: nowrap;
 }
@@ -924,7 +1027,7 @@ onUnmounted(() => {
 .chapter-divider {
   width: 35px;
   height: 1px;
-  background: rgba(212, 175, 55, 0.25);
+  background: var(--accent-30);
 }
 
 // 主要内容区域
@@ -940,6 +1043,8 @@ onUnmounted(() => {
   padding: 10px 40px 70px;
   z-index: 10;
   position: relative;
+  /* 仿真翻页的 3D 透视 */
+  perspective: 1600px;
 }
 
 .chapter-container {
@@ -961,7 +1066,7 @@ onUnmounted(() => {
 .chapter-content-horizontal {
   font-size: 1.25rem;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text-bright);
   text-align: center;
   letter-spacing: 0.25em;
   animation: fade-in 2s ease-out forwards;
@@ -975,7 +1080,7 @@ onUnmounted(() => {
 .chapter-content-vertical {
   font-size: 1.4rem;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text-bright);
   text-align: center;
   letter-spacing: 0.35em;
   animation: fade-in 2s ease-out forwards;
@@ -1000,8 +1105,8 @@ onUnmounted(() => {
   gap: 2px;
   padding: 8px 18px 6px;
   border-radius: 24px;
-  background: rgba(212, 175, 55, 0.08);
-  border: 1px solid rgba(212, 175, 55, 0.18);
+  background: var(--accent-05);
+  border: 1px solid var(--accent-15);
   cursor: pointer;
   z-index: 60;
   animation: hint-float 3s ease-in-out infinite;
@@ -1014,12 +1119,12 @@ onUnmounted(() => {
 
 .zen-hint-icon {
   font-size: 18px;
-  color: rgba(212, 175, 55, 0.75);
+  color: var(--accent-strong);
 }
 
 .zen-hint-text {
   font-size: 11px;
-  color: rgba(212, 175, 55, 0.65);
+  color: var(--accent-strong);
   letter-spacing: 2px;
   white-space: nowrap;
 }
@@ -1029,7 +1134,7 @@ onUnmounted(() => {
   50% { transform: translateX(-50%) translateY(-4px); }
 }
 
-// 底部工具栏：左下目录 / 中间横竖排 / 右下释义
+// 底部工具栏：目录 / 释义 / 横竖排 / 修行设置，四键 space-between 均匀分布
 .bottom-toolbar {
   position: fixed;
   left: 0;
@@ -1040,7 +1145,7 @@ onUnmounted(() => {
   align-items: center;
   padding: 15px 28px calc(20px + env(safe-area-inset-bottom));
   min-height: 70px;
-  background: linear-gradient(0deg, rgba(10, 10, 10, 0.85) 0%, rgba(10, 10, 10, 0) 100%);
+  background: var(--toolbar-grad);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 50;
@@ -1053,35 +1158,18 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-.toolbar-side {
-  width: 60px;
-  display: flex;
-  justify-content: center;
-}
-
-.toolbar-side-right {
-  justify-content: flex-end;
-}
-
-.toolbar-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .action-btn {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  background: rgba(255,255,255,0.03);
-  color: rgba(232, 228, 220, 0.8);
+  background: var(--surface-1);
+  color: var(--text-2);
 }
 
 .action-btn:active {
@@ -1089,8 +1177,8 @@ onUnmounted(() => {
 }
 
 .action-btn.active {
-  color: #d4af37;
-  border-color: rgba(212, 175, 55, 0.3);
+  color: var(--accent);
+  border-color: var(--accent-30);
 }
 
 .action-btn .material-symbols-outlined {
@@ -1106,6 +1194,12 @@ onUnmounted(() => {
   }
 
   .main-content {
+    padding-bottom: 40px;
+  }
+
+  // 纸页内边距与主内容保持一致，翻起时版式不错位
+  .flip-sheet-front,
+  .flip-sheet-back {
     padding-bottom: 40px;
   }
 }
@@ -1124,10 +1218,10 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: rgba(14, 14, 14, 0.95);
+  background: var(--panel-bg-solid);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
-  border-right: 1px solid rgba(255,255,255,0.06);
+  border-right: 1px solid var(--surface-2);
 }
 
 .nav-panel.active {
@@ -1139,14 +1233,14 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 30px 20px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid var(--surface-2);
   flex-shrink: 0;
 }
 
 .nav-title {
   font-size: 18px;
   font-weight: 500;
-  color: #d4af37;
+  color: var(--accent);
   letter-spacing: 2px;
 }
 
@@ -1159,21 +1253,21 @@ onUnmounted(() => {
   width: 100%;
   padding: 10px 16px;
   border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
-  color: #e2e2e2;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-1);
   font-size: 14px;
   outline: none;
   transition: all 0.3s ease;
 }
 
 .nav-search-input:focus {
-  border-color: rgba(212, 175, 55, 0.3);
-  background: rgba(255,255,255,0.05);
+  border-color: var(--accent-30);
+  background: var(--surface-2);
 }
 
 .nav-search-input::placeholder {
-  color: rgba(255,255,255,0.3);
+  color: var(--text-3);
 }
 
 .nav-content {
@@ -1196,52 +1290,52 @@ onUnmounted(() => {
 }
 
 .nav-chapter-item:active {
-  background: rgba(255,255,255,0.03);
+  background: var(--surface-1);
 }
 
 .nav-chapter-item.active {
-  background: rgba(212, 175, 55, 0.1);
-  border-color: rgba(212, 175, 55, 0.2);
+  background: var(--accent-15);
+  border-color: var(--accent-15);
 }
 
 .nav-chapter-num {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border: 1px solid var(--accent-30);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #d4af37;
+  color: var(--accent);
   font-size: 12px;
   flex-shrink: 0;
 }
 
 .nav-chapter-item.active .nav-chapter-num {
-  background: rgba(212, 175, 55, 0.2);
+  background: var(--accent-15);
 }
 
 .nav-chapter-title {
   flex: 1;
   font-size: 14px;
-  color: rgba(248, 246, 242, 0.8);
+  color: var(--text-2);
   letter-spacing: 1px;
 }
 
 .nav-chapter-item.active .nav-chapter-title {
-  color: #d4af37;
+  color: var(--accent);
 }
 
 .nav-footer {
   padding: 15px 20px 20px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--surface-2);
   flex-shrink: 0;
   text-align: center;
 }
 
 .nav-progress {
   font-size: 12px;
-  color: rgba(255,255,255,0.4);
+  color: var(--text-3);
   letter-spacing: 1px;
 }
 
@@ -1259,10 +1353,10 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: rgba(18, 18, 18, 0.85);
+  background: var(--panel-bg);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--surface-2);
 }
 
 .interpretation-panel.active {
@@ -1273,7 +1367,7 @@ onUnmounted(() => {
   width: 40px;
   height: 4px;
   border-radius: 2px;
-  background: rgba(255,255,255,0.2);
+  background: var(--text-3);
   margin: 15px auto;
   flex-shrink: 0;
 }
@@ -1292,7 +1386,7 @@ onUnmounted(() => {
   letter-spacing: 4px;
   margin-bottom: 20px;
   text-align: center;
-  color: #d4af37;
+  color: var(--accent);
   opacity: 0.8;
 }
 
@@ -1300,20 +1394,20 @@ onUnmounted(() => {
   font-size: 15px;
   line-height: 2.2;
   margin-bottom: 30px;
-  color: #e8e4dc;
+  color: var(--text-1);
   text-align: justify;
 }
 
 // 悟道留言区（释义面板内）
 .comments-section {
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--surface-2);
   padding-top: 20px;
 }
 
 .comments-header {
   font-size: 15px;
   font-weight: 500;
-  color: #f8f6f2;
+  color: var(--text-1);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1322,7 +1416,7 @@ onUnmounted(() => {
 
 .comments-icon {
   font-size: 18px;
-  color: #d4af37;
+  color: var(--accent);
 }
 
 .no-comments {
@@ -1330,7 +1424,7 @@ onUnmounted(() => {
   justify-content: center;
   padding: 60px 0;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-3);
   letter-spacing: 2px;
 }
 
@@ -1338,8 +1432,8 @@ onUnmounted(() => {
   padding: 16px;
   border-radius: 16px;
   margin-bottom: 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: var(--surface-1);
+  border: 1px solid var(--surface-2);
 }
 
 .comment-header {
@@ -1354,30 +1448,30 @@ onUnmounted(() => {
   height: 36px;
   border-radius: 50%;
   background: linear-gradient(135deg, #1a2a3a, #2a1a2a);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--border-soft);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #d4af37;
+  color: var(--accent);
   font-size: 14px;
 }
 
 .comment-user {
   font-size: 14px;
   font-weight: 500;
-  color: #e8e4dc;
+  color: var(--text-1);
 }
 
 .comment-time {
   font-size: 12px;
   margin-left: auto;
-  color: rgba(255,255,255,0.4);
+  color: var(--text-3);
 }
 
 .comment-text {
   font-size: 14px;
   line-height: 1.6;
-  color: rgba(255,255,255,0.8);
+  color: var(--text-2);
 }
 
 .comment-actions {
@@ -1386,7 +1480,7 @@ onUnmounted(() => {
   gap: 20px;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid var(--surface-2);
 }
 
 .comment-action-btn {
@@ -1397,17 +1491,17 @@ onUnmounted(() => {
   border: none;
   cursor: pointer;
   font-size: 13px;
-  color: rgba(255,255,255,0.5);
+  color: var(--text-3);
   transition: all 0.2s;
   padding: 0;
 }
 
 .comment-action-btn:active {
-  color: rgba(255,255,255,0.7);
+  color: var(--text-2);
 }
 
 .comment-action-btn.liked {
-  color: #d4af37;
+  color: var(--accent);
 }
 
 .comment-action-btn .material-symbols-outlined {
@@ -1422,13 +1516,13 @@ onUnmounted(() => {
 .replies-section {
   margin-top: 12px;
   padding-left: 12px;
-  border-left: 2px solid rgba(255,255,255,0.08);
+  border-left: 2px solid var(--border);
 }
 
 .reply-item {
   padding: 10px 12px;
   margin-bottom: 8px;
-  background: rgba(255,255,255,0.02);
+  background: var(--surface-1);
   border-radius: 8px;
 }
 
@@ -1444,34 +1538,34 @@ onUnmounted(() => {
   height: 24px;
   border-radius: 50%;
   background: linear-gradient(135deg, #1a2a3a, #2a1a2a);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--border-soft);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #d4af37;
+  color: var(--accent);
   font-size: 10px;
 }
 
 .reply-user {
   font-size: 12px;
   font-weight: 500;
-  color: #e8e4dc;
+  color: var(--text-1);
 }
 
 .reply-time {
   font-size: 11px;
   margin-left: auto;
-  color: rgba(255,255,255,0.3);
+  color: var(--text-3);
 }
 
 .reply-text {
   font-size: 13px;
   line-height: 1.5;
-  color: rgba(255,255,255,0.7);
+  color: var(--text-2);
 }
 
 .reply-to {
-  color: rgba(212, 175, 55, 0.7);
+  color: var(--accent-strong);
   font-weight: 500;
 }
 
@@ -1483,13 +1577,13 @@ onUnmounted(() => {
   border: none;
   cursor: pointer;
   font-size: 12px;
-  color: rgba(212, 175, 55, 0.7);
+  color: var(--accent-strong);
   margin-top: 8px;
   padding: 0;
 }
 
 .show-replies-btn:active {
-  color: #d4af37;
+  color: var(--accent);
 }
 
 .replies-icon {
@@ -1517,24 +1611,24 @@ onUnmounted(() => {
   flex: 1;
   padding: 8px 12px;
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
   font-size: 12px;
   outline: none;
-  color: #e2e2e2;
+  color: var(--text-1);
 }
 
 .reply-input::placeholder {
-  color: rgba(255,255,255,0.25);
+  color: var(--text-3);
 }
 
 .reply-send-btn {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #d4af37;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  color: var(--accent);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1544,7 +1638,7 @@ onUnmounted(() => {
 }
 
 .reply-send-btn:active {
-  background: rgba(212,175,55,0.15);
+  background: var(--accent-15);
 }
 
 .reply-send-icon {
@@ -1566,24 +1660,24 @@ onUnmounted(() => {
   flex: 1;
   padding: 12px 20px;
   border-radius: 24px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
   font-size: 14px;
   outline: none;
-  color: #e2e2e2;
+  color: var(--text-1);
 }
 
 .comment-input::placeholder {
-  color: rgba(255,255,255,0.25);
+  color: var(--text-3);
 }
 
 .send-btn {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #d4af37;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  color: var(--accent);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1593,74 +1687,185 @@ onUnmounted(() => {
 
 .send-btn:active {
   transform: scale(0.9);
-  background: rgba(212,175,55,0.2);
+  background: var(--accent-15);
 }
 
-// 设置面板
-.settings-panel {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  border-radius: 24px 24px 0 0;
-  padding: 25px 20px calc(35px + env(safe-area-inset-bottom));
-  z-index: 200;
-  transform: translateY(100%);
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  background: rgba(18, 18, 18, 0.85);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border-top: 1px solid rgba(255,255,255,0.06);
-}
-
-.settings-panel.active {
-  transform: translateY(0);
-}
-
+// 设置面板（共享 ThemePanel 组件，这里只保留插槽内容用到的样式）
 .settings-section {
   padding: 16px;
-  background: rgba(255,255,255,0.05);
+  background: var(--surface-2);
   border-radius: 16px;
   margin-bottom: 15px;
 }
 
 .section-title {
   font-size: 13px;
-  color: rgba(255,255,255,0.6);
+  color: var(--text-2);
   margin-bottom: 10px;
 }
 
-.color-schemes {
+// 字体大小步进器（ThemePanel #extra 插槽内容）
+.font-size-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.size-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  background: var(--surface-1, rgba(255, 255, 255, 0.03));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-1, #e2e2e2);
+}
+
+.size-btn:active {
+  transform: scale(0.9);
+}
+
+.size-display {
+  min-width: 36px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--accent, #d4af37);
+  font-weight: 500;
+}
+
+// 翻页方式选择（ThemePanel #extra 插槽内容）
+.page-mode-title {
+  margin-top: 18px;
+}
+
+.page-mode-control {
   display: flex;
   gap: 12px;
 }
 
-.scheme-item {
+.mode-btn {
   flex: 1;
-  aspect-ratio: 1;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  border: 2px solid transparent;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 10px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  background: var(--surface-1, rgba(255, 255, 255, 0.03));
+  color: var(--text-2, rgba(248, 246, 242, 0.8));
   font-size: 14px;
+  letter-spacing: 1px;
 }
 
-.scheme-item:active {
-  transform: scale(0.95);
+.mode-btn.mode-active {
+  border-color: var(--accent, #d4af37);
+  background: var(--accent-15, rgba(212, 175, 55, 0.15));
+  color: var(--accent, #d4af37);
 }
 
-.scheme-item.scheme-active {
-  border-color: #d4af37;
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+// 仿真翻页：左右点击热区（透明层，仅承担点击翻页）
+.tap-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 28%;
+  z-index: 20;
 }
 
-.scheme-name {
-  font-size: 12px;
-  color: #fff;
+.tap-zone-left {
+  left: 0;
+}
+
+.tap-zone-right {
+  right: 0;
+}
+
+// 仿真翻页：整页翻起的纸页（参考微信读书仿真效果）
+// 正面为旧章内容，绕书脊侧翻起 180°；背面为纸背渐变；新章内容在下方露出
+.flip-sheet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 25;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.flip-sheet-front,
+.flip-sheet-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 40px 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: var(--page-bg, #0e0e0e);
+}
+
+// 纸背：随翻起角度受光，用不对称渐变模拟纸张背面
+.flip-sheet-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(105deg, rgba(0, 0, 0, 0.82) 0%, rgba(255, 255, 255, 0.07) 45%, rgba(0, 0, 0, 0.38) 100%);
+}
+
+// 正面纸页上的阴影：靠近书脊一侧随翻起加深
+.flip-sheet-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  animation: sheetShade 0.7s ease-in forwards;
+}
+
+.sheet-forward .flip-sheet-shade {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 55%);
+}
+
+.sheet-back .flip-sheet-shade {
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 55%);
+}
+
+@keyframes sheetShade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sheet-forward {
+  transform-origin: left center;
+  animation: sheetOutF 0.7s cubic-bezier(0.35, 0, 0.25, 1) forwards;
+}
+
+.sheet-back {
+  transform-origin: right center;
+  animation: sheetOutB 0.7s cubic-bezier(0.35, 0, 0.25, 1) forwards;
+}
+
+// 翻起节奏：先快速掀角，中段过半，末段缓缓落纸（接近真实纸张阻尼）
+@keyframes sheetOutF {
+  0% { transform: rotateY(0); }
+  35% { transform: rotateY(-55deg); }
+  70% { transform: rotateY(-135deg); }
+  100% { transform: rotateY(-180deg); }
+}
+
+@keyframes sheetOutB {
+  0% { transform: rotateY(0); }
+  35% { transform: rotateY(55deg); }
+  70% { transform: rotateY(135deg); }
+  100% { transform: rotateY(180deg); }
 }
 
 // 遮罩层

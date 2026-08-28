@@ -1,9 +1,10 @@
 /* 全局样式 - 深色水墨风格 */
 
-/* 引入 Material Symbols Outlined 图标字体 */
-/* #ifdef H5 */
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
-/* #endif */
+/* 引入 Material Symbols Outlined 图标字体（base64 内嵌子集，两端共用，勿用远程 @import——
+ * WXSS 不支持 url() 远程导入，会导致小程序 app.wxss 编译失败） */
+@import './iconfont.css';
+/* 主题 Token（默认墨 + 夜/竹/紫/海 覆盖类） */
+@import './themes.css';
 
 page {
   background: radial-gradient(ellipse at center, rgb(40,40,40) 0%, #0e0e0e 100%);
@@ -63,7 +64,7 @@ page {
   font-size: 32px;
 }
 
-/* 小程序端需要使用备用图标，因为没有 Material Symbols */
+/* 小程序端图标兜底样式（图标字体已内嵌，两端可统一使用 .material-symbols-outlined） */
 /* #ifdef MP-WEIXIN */
 .mp-icon {
   font-size: 24px;
@@ -75,15 +76,15 @@ page {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
   font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: rgba(255,255,255,0.03);
-  color: rgba(248, 246, 242, 0.8);
+  background: var(--surface-1);
+  color: var(--text-2);
 }
 
 .icon-btn:active {
@@ -93,7 +94,7 @@ page {
 .nav-btn, .action-btn {
   width: 48px;
   height: 48px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
   border-radius: 50%;
   font-size: 22px;
   display: flex;
@@ -101,8 +102,8 @@ page {
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  background: rgba(255,255,255,0.03);
-  color: rgba(232, 228, 220, 0.8);
+  background: var(--surface-1);
+  color: var(--text-2);
   position: relative;
   overflow: hidden;
 }
@@ -148,13 +149,13 @@ page {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
+  background: var(--border-soft);
   border-radius: 2px;
 }
 
 /* 选中样式 */
 ::selection {
-  background: rgba(212, 175, 55, 0.3);
+  background: var(--accent-30);
   color: #fff;
 }
 
@@ -172,15 +173,15 @@ page {
 
 /* 金色主题色 */
 .text-gold {
-  color: #d4af37;
+  color: var(--accent);
 }
 
 .bg-gold {
-  background-color: #d4af37;
+  background-color: var(--accent);
 }
 
 .border-gold {
-  border-color: #d4af37;
+  border-color: var(--accent);
 }
 
 /* 半透明背景 */
@@ -189,14 +190,14 @@ page {
 }
 
 .bg-overlay-light {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-1);
 }
 
 /* 边框样式 */
 .border-light {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
 }
 
 .border-gold-light {
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border: 1px solid var(--accent-30);
 }

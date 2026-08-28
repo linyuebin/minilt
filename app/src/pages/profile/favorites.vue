@@ -1,5 +1,8 @@
 <template>
-  <view class="favorites-page">
+  <view class="favorites-page" :class="theme.themeClass">
+    <!-- 自定义背景层 -->
+    <CustomBackground />
+
     <view class="page-header">
       <text class="page-title">修道藏经</text>
       <text class="page-subtitle">你收藏的章节</text>
@@ -42,7 +45,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useThemeStore } from '@/store/theme'
+import CustomBackground from '@/components/CustomBackground.vue'
 import { getFavorites } from '@/api'
+
+const theme = useThemeStore()
 
 const favorites = ref([])
 const loading = ref(false)
@@ -95,9 +102,16 @@ onMounted(() => {
 <style lang="scss" scoped>
 .favorites-page {
   min-height: 100vh;
-  background: #0a0a0a;
+  background: var(--bg-flat);
   padding: 40rpx;
   box-sizing: border-box;
+}
+
+/* 内容区块位于自定义背景层之上 */
+.page-header,
+.favorites-list {
+  position: relative;
+  z-index: 1;
 }
 
 .page-header {
@@ -106,7 +120,7 @@ onMounted(() => {
   .page-title {
     font-size: 40rpx;
     font-weight: bold;
-    color: #d4af37;
+    color: var(--accent);
     display: block;
   }
 
@@ -147,8 +161,8 @@ onMounted(() => {
 }
 
 .favorite-item {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: var(--surface-1);
+  border: 1px solid var(--accent-15);
   border-radius: 12rpx;
   padding: 30rpx;
   margin-bottom: 30rpx;
@@ -159,8 +173,8 @@ onMounted(() => {
     margin-bottom: 20rpx;
 
     .chapter-num {
-      background: rgba(212, 175, 55, 0.2);
-      color: #d4af37;
+      background: var(--accent-15);
+      color: var(--accent);
       font-size: 24rpx;
       padding: 6rpx 12rpx;
       border-radius: 6rpx;
@@ -176,7 +190,7 @@ onMounted(() => {
 
     .favorite-icon {
       font-size: 32rpx;
-      color: #d4af37;
+      color: var(--accent);
     }
   }
 

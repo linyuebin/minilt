@@ -1,5 +1,8 @@
 <template>
-  <view class="community-container">
+  <view class="community-container" :class="theme.themeClass">
+    <!-- 自定义背景层 -->
+    <CustomBackground />
+
     <!-- 顶部标题 -->
     <view class="header">
       <view class="header-title">
@@ -100,8 +103,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
+import { useThemeStore } from '@/store/theme'
+import CustomBackground from '@/components/CustomBackground.vue'
 
 const userStore = useUserStore()
+const theme = useThemeStore()
 const insights = ref([])
 const currentChapter = ref(1)
 const totalReaders = ref(0)
@@ -230,10 +236,18 @@ onMounted(async () => {
 <style lang="scss" scoped>
 .community-container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
-  color: #e2e2e2;
+  background: var(--page-bg-alt);
+  color: var(--text-1);
   font-family: "KaiTi", "STKaiti", "KaiTi_GB2312", "Songti SC", serif;
   padding: 40px 20px 20px;
+}
+
+/* 内容区块位于自定义背景层之上 */
+.header,
+.main-content,
+.footer {
+  position: relative;
+  z-index: 1;
 }
 
 .header {
@@ -250,7 +264,7 @@ onMounted(async () => {
 
 .title {
   font-size: 48px;
-  color: #d4af37;
+  color: var(--accent);
   letter-spacing: 12px;
   margin-bottom: 10px;
   font-weight: 300;
@@ -258,7 +272,7 @@ onMounted(async () => {
 
 .subtitle {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-3);
   letter-spacing: 4px;
 }
 
@@ -279,8 +293,8 @@ onMounted(async () => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: rgba(212, 175, 55, 0.1);
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: var(--accent-15);
+  border: 1px solid var(--accent-15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -289,29 +303,29 @@ onMounted(async () => {
 
 .empty-icon .material-symbols-outlined {
   font-size: 36px;
-  color: #d4af37;
+  color: var(--accent);
 }
 
 .empty-title {
   font-size: 18px;
-  color: #f8f6f2;
+  color: var(--text-1);
   margin-bottom: 10px;
   letter-spacing: 2px;
 }
 
 .empty-desc {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-3);
   margin-bottom: 30px;
   letter-spacing: 1px;
 }
 
 .login-btn {
   padding: 12px 32px;
-  background: rgba(212, 175, 55, 0.15);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: var(--accent-15);
+  border: 1px solid var(--accent-30);
   border-radius: 24px;
-  color: #d4af37;
+  color: var(--accent);
   font-size: 14px;
   letter-spacing: 2px;
   cursor: pointer;
@@ -319,7 +333,7 @@ onMounted(async () => {
 }
 
 .login-btn:active {
-  background: rgba(212, 175, 55, 0.25);
+  background: var(--accent-30);
 }
 
 .insights-section {
@@ -333,15 +347,15 @@ onMounted(async () => {
 }
 
 .insight-item {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 16px;
   transition: all 0.3s ease;
 }
 
 .insight-item:active {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-2);
 }
 
 .insight-header {
@@ -356,11 +370,11 @@ onMounted(async () => {
   height: 40px;
   border-radius: 50%;
   background: linear-gradient(135deg, #1a2a3a, #2a1a2a);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-soft);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #d4af37;
+  color: var(--accent);
   font-size: 14px;
   flex-shrink: 0;
 }
@@ -374,18 +388,18 @@ onMounted(async () => {
 
 .insight-name {
   font-size: 14px;
-  color: #f8f6f2;
+  color: var(--text-1);
   font-weight: 500;
 }
 
 .insight-chapter {
   font-size: 12px;
-  color: rgba(212, 175, 55, 0.7);
+  color: var(--accent-strong);
 }
 
 .insight-time {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-3);
 }
 
 .insight-content {
@@ -396,7 +410,7 @@ onMounted(async () => {
 .insight-text {
   font-size: 14px;
   line-height: 1.8;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-2);
   letter-spacing: 0.5px;
 }
 
@@ -413,12 +427,12 @@ onMounted(async () => {
   gap: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-3);
   font-size: 13px;
 }
 
 .insight-action:active {
-  color: #d4af37;
+  color: var(--accent);
 }
 
 .insight-action .material-symbols-outlined {
@@ -432,7 +446,7 @@ onMounted(async () => {
 
 .section-title {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-2);
   letter-spacing: 2px;
   margin-bottom: 15px;
 }
@@ -447,8 +461,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
   border-radius: 16px;
   gap: 15px;
 }
@@ -457,8 +471,8 @@ onMounted(async () => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(212, 175, 55, 0.1);
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: var(--accent-15);
+  border: 1px solid var(--accent-15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -467,7 +481,7 @@ onMounted(async () => {
 
 .activity-icon .material-symbols-outlined {
   font-size: 20px;
-  color: #d4af37;
+  color: var(--accent);
 }
 
 .activity-content {
@@ -479,13 +493,13 @@ onMounted(async () => {
 
 .activity-text {
   font-size: 14px;
-  color: #f8f6f2;
+  color: var(--text-1);
   letter-spacing: 1px;
 }
 
 .activity-time {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-3);
 }
 
 .footer {
@@ -497,7 +511,7 @@ onMounted(async () => {
 
 .footer-text {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--text-3);
   letter-spacing: 6px;
 }
 

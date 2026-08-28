@@ -1,5 +1,8 @@
 <template>
-  <view class="login-container">
+  <view class="login-container" :class="theme.themeClass">
+    <!-- 自定义背景层 -->
+    <CustomBackground />
+
     <!-- H5端账密登录表单 -->
     <!-- #ifdef H5 -->
     <view class="h5-login">
@@ -133,9 +136,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useUserStore } from '@/store/user'
+import { useThemeStore } from '@/store/theme'
+import CustomBackground from '@/components/CustomBackground.vue'
 import { login as loginApi, register as registerApi, wxLogin } from '@/api'
 
 const userStore = useUserStore()
+const theme = useThemeStore()
 
 // H5登录表单数据
 const formData = ref({
@@ -285,8 +291,8 @@ const handleGuestLogin = () => {
 <style lang="scss" scoped>
 .login-container {
   min-height: 100vh;
-  background: radial-gradient(ellipse at center, rgb(40,40,40) 0%, #0e0e0e 100%);
-  color: #e2e2e2;
+  background: var(--page-bg);
+  color: var(--text-1);
   font-family: "KaiTi", "STKaiti", "KaiTi_GB2312", "Songti SC", serif;
   display: flex;
   flex-direction: column;
@@ -294,6 +300,13 @@ const handleGuestLogin = () => {
   justify-content: center;
   padding: 40rpx;
   box-sizing: border-box;
+}
+
+/* 内容区块位于自定义背景层之上 */
+.h5-login,
+.mp-login {
+  position: relative;
+  z-index: 1;
 }
 
 // H5端样式
@@ -320,7 +333,7 @@ const handleGuestLogin = () => {
   .logo-subtitle {
     display: block;
     font-size: 24rpx;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-3);
     letter-spacing: 4rpx;
   }
 }
@@ -329,16 +342,16 @@ const handleGuestLogin = () => {
   .input-group {
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--surface-1);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 28rpx 32rpx;
     margin-bottom: 24rpx;
     transition: all 0.3s ease;
 
     &:focus-within {
-      border-color: rgba(212, 175, 55, 0.3);
-      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--accent-30);
+      background: var(--surface-2);
     }
 
     .icon {
@@ -350,24 +363,24 @@ const handleGuestLogin = () => {
     .input-field {
       flex: 1;
       font-size: 30rpx;
-      color: #e2e2e2;
+      color: var(--text-1);
       background: transparent;
       border: none;
       outline: none;
     }
 
     :deep(.input-placeholder) {
-      color: rgba(255, 255, 255, 0.3);
+      color: var(--text-3);
     }
   }
 
   .login-btn {
     width: 100%;
     height: 96rpx;
-    background: rgba(212, 175, 55, 0.1);
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    background: var(--accent-15);
+    border: 1px solid var(--accent-30);
     border-radius: 16px;
-    color: #d4af37;
+    color: var(--accent);
     font-size: 32rpx;
     font-weight: 500;
     letter-spacing: 4rpx;
@@ -379,7 +392,7 @@ const handleGuestLogin = () => {
     }
 
     &:not(.btn-disabled):active {
-      background: rgba(212, 175, 55, 0.2);
+      background: var(--accent-15);
       transform: scale(0.98);
     }
   }
@@ -388,19 +401,19 @@ const handleGuestLogin = () => {
     text-align: center;
     margin-top: 40rpx;
     font-size: 26rpx;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-3);
 
     .link {
-      color: #d4af37;
+      color: var(--accent);
       margin-left: 8rpx;
       padding: 8rpx 16rpx;
       border-radius: 8px;
-      background: rgba(212, 175, 55, 0.05);
+      background: var(--accent-05);
       transition: all 0.2s;
     }
 
     .link:active {
-      background: rgba(212, 175, 55, 0.1);
+      background: var(--accent-15);
     }
   }
 }
@@ -427,7 +440,7 @@ const handleGuestLogin = () => {
     padding: 48rpx;
     width: 100%;
     max-width: 520rpx;
-    border: 1px solid rgba(212, 175, 55, 0.2);
+    border: 1px solid var(--accent-15);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
 
@@ -440,13 +453,13 @@ const handleGuestLogin = () => {
       .modal-title {
         font-size: 36rpx;
         font-weight: 500;
-        color: #d4af37;
+        color: var(--accent);
         letter-spacing: 2rpx;
       }
 
       .modal-close {
         font-size: 56rpx;
-        color: rgba(255, 255, 255, 0.4);
+        color: var(--text-3);
         line-height: 1;
         width: 56rpx;
         height: 56rpx;
@@ -454,28 +467,28 @@ const handleGuestLogin = () => {
         align-items: center;
         justify-content: center;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--surface-2);
         transition: all 0.2s;
       }
 
       .modal-close:active {
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--border-soft);
       }
     }
 
     .input-group {
       display: flex;
       align-items: center;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--surface-1);
+      border: 1px solid var(--border);
       border-radius: 16px;
       padding: 28rpx 32rpx;
       margin-bottom: 24rpx;
       transition: all 0.3s ease;
 
       &:focus-within {
-        border-color: rgba(212, 175, 55, 0.3);
-        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--accent-30);
+        background: var(--surface-2);
       }
 
       .material-symbols-outlined {
@@ -488,24 +501,24 @@ const handleGuestLogin = () => {
       .input-field {
         flex: 1;
         font-size: 30rpx;
-        color: #e2e2e2;
+        color: var(--text-1);
         background: transparent;
         border: none;
         outline: none;
       }
 
       :deep(.input-placeholder) {
-        color: rgba(255, 255, 255, 0.3);
+        color: var(--text-3);
       }
     }
 
     .register-btn {
       width: 100%;
       height: 96rpx;
-      background: rgba(212, 175, 55, 0.1);
-      border: 1px solid rgba(212, 175, 55, 0.3);
+      background: var(--accent-15);
+      border: 1px solid var(--accent-30);
       border-radius: 16px;
-      color: #d4af37;
+      color: var(--accent);
       font-size: 32rpx;
       font-weight: 500;
       letter-spacing: 4rpx;
@@ -517,7 +530,7 @@ const handleGuestLogin = () => {
       }
 
       &:not(.btn-disabled):active {
-        background: rgba(212, 175, 55, 0.2);
+        background: var(--accent-15);
         transform: scale(0.98);
       }
     }
@@ -549,7 +562,7 @@ const handleGuestLogin = () => {
   .logo-subtitle {
     display: block;
     font-size: 26rpx;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-3);
     letter-spacing: 4rpx;
   }
 }
@@ -560,7 +573,7 @@ const handleGuestLogin = () => {
   .mp-tip {
     display: block;
     font-size: 30rpx;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-2);
     margin-bottom: 60rpx;
   }
 
@@ -593,7 +606,7 @@ const handleGuestLogin = () => {
   .guest-tip {
     display: block;
     font-size: 24rpx;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-3);
   }
 }
 
@@ -603,15 +616,15 @@ const handleGuestLogin = () => {
 
   .guest-link {
     font-size: 28rpx;
-    color: rgba(212, 175, 55, 0.7);
+    color: var(--accent-strong);
     padding: 12rpx 32rpx;
     border-radius: 50px;
-    background: rgba(212, 175, 55, 0.05);
+    background: var(--accent-05);
     transition: all 0.2s;
   }
 
   .guest-link:active {
-    background: rgba(212, 175, 55, 0.1);
+    background: var(--accent-15);
   }
 }
 // #endif

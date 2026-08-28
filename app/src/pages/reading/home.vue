@@ -1,5 +1,8 @@
 <template>
-  <view class="reading-home">
+  <view class="reading-home" :class="theme.themeClass">
+    <!-- 自定义背景层 -->
+    <CustomBackground />
+
     <!-- 顶部标题 -->
     <view class="home-header">
       <text class="home-title">道德经</text>
@@ -62,9 +65,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
+import { useThemeStore } from '@/store/theme'
+import CustomBackground from '@/components/CustomBackground.vue'
 import { getChapters } from '@/api'
 
 const userStore = useUserStore()
+const theme = useThemeStore()
 const allChapters = ref([])
 const currentChapter = ref(1)
 const isLoading = ref(true)
@@ -134,10 +140,20 @@ const retryLoad = () => {
 <style lang="scss" scoped>
 .reading-home {
   min-height: 100vh;
-  background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
-  color: #e2e2e2;
+  background: var(--page-bg-alt);
+  color: var(--text-1);
   font-family: "KaiTi", "STKaiti", "KaiTi_GB2312", "Songti SC", serif;
   padding: 40px 20px 20px;
+}
+
+/* 内容区块位于自定义背景层之上 */
+.home-header,
+.loading-container,
+.error-container,
+.home-content,
+.home-footer {
+  position: relative;
+  z-index: 1;
 }
 
 .loading-container,
@@ -153,8 +169,8 @@ const retryLoad = () => {
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 3px solid rgba(212, 175, 55, 0.2);
-  border-top-color: #d4af37;
+  border: 3px solid var(--accent-15);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 20px;
@@ -166,7 +182,7 @@ const retryLoad = () => {
 
 .loading-text {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-2);
   letter-spacing: 2px;
 }
 
@@ -189,14 +205,14 @@ const retryLoad = () => {
 
 .error-text {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-2);
   margin-bottom: 10px;
   letter-spacing: 1px;
 }
 
 .retry-text {
   font-size: 14px;
-  color: rgba(212, 175, 55, 0.7);
+  color: var(--accent-strong);
   letter-spacing: 1px;
 }
 
@@ -209,7 +225,7 @@ const retryLoad = () => {
 .home-title {
   display: block;
   font-size: 48px;
-  color: #d4af37;
+  color: var(--accent);
   letter-spacing: 12px;
   margin-bottom: 10px;
   font-weight: 300;
@@ -218,7 +234,7 @@ const retryLoad = () => {
 .home-subtitle {
   display: block;
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-3);
   letter-spacing: 4px;
 }
 
@@ -231,8 +247,8 @@ const retryLoad = () => {
   display: flex;
   align-items: center;
   padding: 30px 25px;
-  background: rgba(212, 175, 55, 0.08);
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: var(--accent-05);
+  border: 1px solid var(--accent-15);
   border-radius: 20px;
   margin-bottom: 40px;
   cursor: pointer;
@@ -242,15 +258,15 @@ const retryLoad = () => {
 
 .reading-card:active {
   transform: scale(0.98);
-  background: rgba(212, 175, 55, 0.12);
+  background: var(--accent-15);
 }
 
 .card-icon {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: rgba(212, 175, 55, 0.15);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: var(--accent-15);
+  border: 1px solid var(--accent-30);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -260,7 +276,7 @@ const retryLoad = () => {
 
 .card-icon .material-symbols-outlined {
   font-size: 28px;
-  color: #d4af37;
+  color: var(--accent);
 }
 
 .card-content {
@@ -270,7 +286,7 @@ const retryLoad = () => {
 .card-title {
   display: block;
   font-size: 20px;
-  color: #f8f6f2;
+  color: var(--text-1);
   margin-bottom: 6px;
   letter-spacing: 2px;
 }
@@ -278,7 +294,7 @@ const retryLoad = () => {
 .card-desc {
   display: block;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-3);
   letter-spacing: 1px;
 }
 
@@ -286,7 +302,7 @@ const retryLoad = () => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -295,7 +311,7 @@ const retryLoad = () => {
 
 .card-arrow .material-symbols-outlined {
   font-size: 20px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-2);
 }
 
 .progress-section {
@@ -305,14 +321,14 @@ const retryLoad = () => {
 
 .progress-title {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-2);
   letter-spacing: 2px;
   margin-bottom: 15px;
 }
 
 .progress-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 20px;
 }
@@ -326,25 +342,25 @@ const retryLoad = () => {
 
 .progress-num {
   font-size: 32px;
-  color: #d4af37;
+  color: var(--accent);
   font-weight: 300;
 }
 
 .progress-text {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-3);
 }
 
 .progress-bar {
   height: 6px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--border-soft);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #d4af37 0%, #f4cf67 100%);
+  background: var(--accent-grad);
   border-radius: 3px;
   transition: width 0.6s ease;
 }
@@ -358,7 +374,7 @@ const retryLoad = () => {
 
 .footer-text {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--text-3);
   letter-spacing: 6px;
 }
 

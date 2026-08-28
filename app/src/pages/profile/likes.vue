@@ -1,5 +1,8 @@
 <template>
-  <view class="likes-page">
+  <view class="likes-page" :class="theme.themeClass">
+    <!-- 自定义背景层 -->
+    <CustomBackground />
+
     <view class="page-header">
       <text class="page-title">我的点赞</text>
     </view>
@@ -42,7 +45,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useThemeStore } from '@/store/theme'
+import CustomBackground from '@/components/CustomBackground.vue'
 import { getMyLikes } from '@/api'
+
+const theme = useThemeStore()
 
 const likes = ref([])
 const loading = ref(false)
@@ -74,9 +81,16 @@ const jumpToChapter = (chapterId) => {
 <style lang="scss" scoped>
 .likes-page {
   min-height: 100vh;
-  background: #0a0a0a;
+  background: var(--bg-flat);
   padding: 40rpx;
   box-sizing: border-box;
+}
+
+/* 内容区块位于自定义背景层之上 */
+.page-header,
+.likes-list {
+  position: relative;
+  z-index: 1;
 }
 
 .page-header {
@@ -85,7 +99,7 @@ const jumpToChapter = (chapterId) => {
   .page-title {
     font-size: 40rpx;
     font-weight: bold;
-    color: #d4af37;
+    color: var(--accent);
   }
 }
 
@@ -100,7 +114,7 @@ const jumpToChapter = (chapterId) => {
   .empty-glyph {
     display: block;
     font-size: 80rpx;
-    color: rgba(212, 175, 55, 0.4);
+    color: var(--accent-strong);
     margin-bottom: 30rpx;
   }
 
@@ -119,8 +133,8 @@ const jumpToChapter = (chapterId) => {
 }
 
 .like-item {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: var(--surface-1);
+  border: 1px solid var(--accent-15);
   border-radius: 12rpx;
   padding: 30rpx;
   margin-bottom: 30rpx;
@@ -131,8 +145,8 @@ const jumpToChapter = (chapterId) => {
     margin-bottom: 20rpx;
 
     .chapter-tag {
-      background: rgba(212, 175, 55, 0.2);
-      color: #d4af37;
+      background: var(--accent-15);
+      color: var(--accent);
       font-size: 24rpx;
       padding: 6rpx 12rpx;
       border-radius: 6rpx;
@@ -147,7 +161,7 @@ const jumpToChapter = (chapterId) => {
     .item-arrow {
       margin-left: auto;
       font-size: 28rpx;
-      color: rgba(255, 255, 255, 0.3);
+      color: var(--text-3);
     }
   }
 
@@ -164,7 +178,7 @@ const jumpToChapter = (chapterId) => {
 
     .like-author {
       font-size: 24rpx;
-      color: rgba(212, 175, 55, 0.7);
+      color: var(--accent-strong);
     }
 
     .like-time {

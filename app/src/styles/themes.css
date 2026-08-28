@@ -1,0 +1,148 @@
+/* 主题 Token 体系：默认「墨」定义在 page 上，其余四主题以页面根节点类覆盖。
+ * 约定：token 全部为预组合值（不用 rgba(var(--rgb),a) 组合写法，保证 WXSS 兼容）；
+ * 主题类只绑定页面根 view，变量沿节点树继承进组件（不受 WXSS 样式隔离影响）。
+ * 墨列的值与改造前硬编码值一一对应，默认主题视觉零变化。 */
+
+/* ---------- 默认：墨（经典水墨） ---------- */
+page {
+  /* 背景与面板 */
+  --page-bg: radial-gradient(ellipse at center, #282828 0%, #0e0e0e 100%);
+  --page-bg-alt: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+  --bg-flat: #0a0a0a;
+  --panel-bg: rgba(18, 18, 18, 0.85);
+  --panel-bg-solid: rgba(14, 14, 14, 0.95);
+  --toolbar-grad: linear-gradient(0deg, rgba(10, 10, 10, 0.85) 0%, rgba(10, 10, 10, 0) 100%);
+
+  /* 表面与边框 */
+  --surface-1: rgba(255, 255, 255, 0.03);
+  --surface-2: rgba(255, 255, 255, 0.05);
+  --surface-card: rgba(26, 26, 26, 0.6);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-soft: rgba(255, 255, 255, 0.06);
+
+  /* 文本 */
+  --text-bright: rgba(255, 255, 255, 0.95);
+  --text-1: #e2e2e2;
+  --text-2: rgba(248, 246, 242, 0.8);
+  --text-3: rgba(255, 255, 255, 0.45);
+
+  /* 主色（金）及 alpha 档位 */
+  --accent: #d4af37;
+  --accent-05: rgba(212, 175, 55, 0.08);
+  --accent-15: rgba(212, 175, 55, 0.15);
+  --accent-30: rgba(212, 175, 55, 0.3);
+  --accent-strong: rgba(212, 175, 55, 0.7);
+  --accent-grad: linear-gradient(90deg, #d4af37 0%, #f4cf67 100%);
+}
+
+/* ---------- 夜（深邃夜空） ---------- */
+.theme-night {
+  --page-bg: radial-gradient(ellipse at center, #171a33 0%, #080a18 100%);
+  --page-bg-alt: linear-gradient(180deg, #070813 0%, #14172b 100%);
+  --bg-flat: #080a16;
+  --panel-bg: rgba(14, 17, 34, 0.86);
+  --panel-bg-solid: rgba(11, 14, 28, 0.95);
+  --toolbar-grad: linear-gradient(0deg, rgba(7, 8, 19, 0.85) 0%, rgba(7, 8, 19, 0) 100%);
+
+  --surface-1: rgba(150, 170, 255, 0.05);
+  --surface-2: rgba(150, 170, 255, 0.09);
+  --surface-card: rgba(24, 28, 52, 0.65);
+  --border: rgba(150, 170, 255, 0.14);
+  --border-soft: rgba(150, 170, 255, 0.1);
+
+  --text-bright: rgba(238, 242, 255, 0.96);
+  --text-1: #dfe3f5;
+  --text-2: rgba(226, 232, 250, 0.78);
+  --text-3: rgba(226, 232, 250, 0.45);
+
+  --accent: #8aa0ff;
+  --accent-05: rgba(138, 160, 255, 0.08);
+  --accent-15: rgba(138, 160, 255, 0.15);
+  --accent-30: rgba(138, 160, 255, 0.3);
+  --accent-strong: rgba(138, 160, 255, 0.7);
+  --accent-grad: linear-gradient(90deg, #7f95ff 0%, #b3a4ff 100%);
+}
+
+/* ---------- 竹（竹林清幽） ---------- */
+.theme-bamboo {
+  --page-bg: radial-gradient(ellipse at center, #14231a 0%, #060d09 100%);
+  --page-bg-alt: linear-gradient(180deg, #050b08 0%, #101d15 100%);
+  --bg-flat: #06100b;
+  --panel-bg: rgba(12, 22, 17, 0.86);
+  --panel-bg-solid: rgba(10, 18, 14, 0.95);
+  --toolbar-grad: linear-gradient(0deg, rgba(5, 11, 8, 0.85) 0%, rgba(5, 11, 8, 0) 100%);
+
+  --surface-1: rgba(140, 220, 170, 0.05);
+  --surface-2: rgba(140, 220, 170, 0.09);
+  --surface-card: rgba(18, 34, 26, 0.65);
+  --border: rgba(140, 220, 170, 0.14);
+  --border-soft: rgba(140, 220, 170, 0.1);
+
+  --text-bright: rgba(240, 250, 244, 0.96);
+  --text-1: #ddeee3;
+  --text-2: rgba(226, 242, 232, 0.78);
+  --text-3: rgba(226, 242, 232, 0.45);
+
+  --accent: #6fbf8f;
+  --accent-05: rgba(111, 191, 143, 0.08);
+  --accent-15: rgba(111, 191, 143, 0.15);
+  --accent-30: rgba(111, 191, 143, 0.3);
+  --accent-strong: rgba(111, 191, 143, 0.7);
+  --accent-grad: linear-gradient(90deg, #5fae83 0%, #9fd8a8 100%);
+}
+
+/* ---------- 紫（紫气东来） ---------- */
+.theme-purple {
+  --page-bg: radial-gradient(ellipse at center, #241530 0%, #0d0714 100%);
+  --page-bg-alt: linear-gradient(180deg, #0c0614 0%, #1d1029 100%);
+  --bg-flat: #0c0713;
+  --panel-bg: rgba(22, 13, 32, 0.86);
+  --panel-bg-solid: rgba(17, 11, 25, 0.95);
+  --toolbar-grad: linear-gradient(0deg, rgba(12, 6, 20, 0.85) 0%, rgba(12, 6, 20, 0) 100%);
+
+  --surface-1: rgba(200, 160, 255, 0.05);
+  --surface-2: rgba(200, 160, 255, 0.09);
+  --surface-card: rgba(34, 22, 48, 0.65);
+  --border: rgba(200, 160, 255, 0.14);
+  --border-soft: rgba(200, 160, 255, 0.1);
+
+  --text-bright: rgba(248, 242, 255, 0.96);
+  --text-1: #eadff7;
+  --text-2: rgba(238, 228, 250, 0.78);
+  --text-3: rgba(238, 228, 250, 0.45);
+
+  --accent: #b28cf0;
+  --accent-05: rgba(178, 140, 240, 0.08);
+  --accent-15: rgba(178, 140, 240, 0.15);
+  --accent-30: rgba(178, 140, 240, 0.3);
+  --accent-strong: rgba(178, 140, 240, 0.7);
+  --accent-grad: linear-gradient(90deg, #a87fe8 0%, #d5b0ff 100%);
+}
+
+/* ---------- 海（沧海如水） ---------- */
+.theme-sea {
+  --page-bg: radial-gradient(ellipse at center, #0e2432 0%, #050d14 100%);
+  --page-bg-alt: linear-gradient(180deg, #040b11 0%, #0d1e2a 100%);
+  --bg-flat: #050d13;
+  --panel-bg: rgba(9, 20, 29, 0.86);
+  --panel-bg-solid: rgba(7, 17, 25, 0.95);
+  --toolbar-grad: linear-gradient(0deg, rgba(4, 11, 17, 0.85) 0%, rgba(4, 11, 17, 0) 100%);
+
+  --surface-1: rgba(120, 200, 235, 0.05);
+  --surface-2: rgba(120, 200, 235, 0.09);
+  --surface-card: rgba(14, 32, 44, 0.65);
+  --border: rgba(120, 200, 235, 0.14);
+  --border-soft: rgba(120, 200, 235, 0.1);
+
+  --text-bright: rgba(240, 250, 254, 0.96);
+  --text-1: #dbeef7;
+  --text-2: rgba(222, 240, 250, 0.78);
+  --text-3: rgba(222, 240, 250, 0.45);
+
+  --accent: #5fb7d4;
+  --accent-05: rgba(95, 183, 212, 0.08);
+  --accent-15: rgba(95, 183, 212, 0.15);
+  --accent-30: rgba(95, 183, 212, 0.3);
+  --accent-strong: rgba(95, 183, 212, 0.7);
+  --accent-grad: linear-gradient(90deg, #4fa9c9 0%, #8fd6ea 100%);
+}
