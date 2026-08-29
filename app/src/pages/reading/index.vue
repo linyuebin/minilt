@@ -55,26 +55,15 @@
           </view>
         </view>
 
-        <!-- 仿真翻页：整页翻起的旧章纸页（正面旧内容 / 背面纸背），新章从下方露出 -->
-        <view
+        <!-- 覆盖翻页滑层：forward 携带新章自右滑入覆盖，back 携带旧章向右滑出露出下层 -->
+        <CoverPage
           v-if="flipStage === 'out'"
-          class="flip-sheet"
-          :class="flipDir === 'forward' ? 'sheet-forward' : 'sheet-back'"
-        >
-          <view class="flip-sheet-front">
-            <view
-              class="chapter-text"
-              :class="isHorizontal ? 'chapter-content-horizontal' : 'chapter-content-vertical'"
-              :style="{ fontSize: fontSize + 'px' }"
-            >
-              <text class="text-line" v-for="(line, index) in flippingLines" :key="index">
-                {{ line }}
-              </text>
-            </view>
-            <view class="flip-sheet-shade"></view>
-          </view>
-          <view class="flip-sheet-back"></view>
-        </view>
+          :dir="flipDir"
+          :lines="flipLines"
+          :font-size="fontSize"
+          :is-horizontal="isHorizontal"
+          :zen="zenMode"
+        />
 
         <!-- 仿真翻页：左右点击热区（透明层，仅承担点击翻页） -->
         <view v-if="showTapZones" class="tap-zone tap-zone-left" @click.stop="prevChapter"></view>
@@ -272,9 +261,9 @@
           >左右滑动</view>
           <view
             class="mode-btn"
-            :class="{ 'mode-active': pageMode === 'curl' }"
-            @click="setPageMode('curl')"
-          >仿真翻页</view>
+            :class="{ 'mode-active': pageMode === 'cover' }"
+            @click="setPageMode('cover')"
+          >覆盖翻页</view>
         </view>
       </template>
     </ThemePanel>
@@ -288,6 +277,7 @@ import { useUserStore } from '@/store/user'
 import { useThemeStore } from '@/store/theme'
 import ThemePanel from '@/components/ThemePanel.vue'
 import CustomBackground from '@/components/CustomBackground.vue'
+import CoverPage from '@/components/CoverPage.vue'
 import { getChapters, getChapterDetail, getChapterComments, createComment, toggleCommentLike, updateProgress } from '@/api'
 
 const userStore = useUserStore()
@@ -321,13 +311,13 @@ const FONT_MAX = 30
 const FONT_DEFAULT = 20
 const fontSize = ref(FONT_DEFAULT)
 
-// 翻页方式：'swipe' 左右滑动（默认）| 'curl' 仿真翻页（点击热区 + 翻书动画）
+// 翻页方式：'swipe' 左右滑动（默认）| 'cover' 覆盖翻页（点击热区 + 滑层覆盖动画）
 const pageMode = ref('swipe')
-// 仿真翻页动画状态：flipStage '' | 'out'（纸页翻起中）；flipDir 'forward' | 'back'
+// 覆盖翻页动画状态：flipStage '' | 'out'（滑层移动中）；flipDir 'forward' | 'back'
 const flipStage = ref('')
 const flipDir = ref('')
 const isFlipping = computed(() => flipStage.value !== '')
-// 翻起纸页上的旧章快照 / 底层提前渲染的新章
+// 滑层上的旧章快照 / 待露出（或待覆盖）的新章
 const flippingChapter = ref(null)
 const pendingChapter = ref(null)
 
@@ -349,9 +339,12 @@ const filteredChapters = computed(() => {
   )
 })
 
-// 翻页进行中时，底层内容提前切换为已就绪的新章（从翻起的纸页下方露出）
+// 翻页进行中：back 时旧章滑出，下层提前切换为已就绪的新章；
+// forward 时下层保持当前章，等新章滑入覆盖
 const displayChapter = computed(() =>
-  flipStage.value === 'out' && pendingChapter.value ? pendingChapter.value : currentChapter.value
+  flipStage.value === 'out' && flipDir.value === 'back' && pendingChapter.value
+    ? pendingChapter.value
+    : currentChapter.value
 )
 
 const displayLines = computed(() => {
@@ -359,10 +352,11 @@ const displayLines = computed(() => {
   return displayChapter.value.content.split('。').filter(line => line.trim())
 })
 
-// 翻起的纸页上渲染旧章内容快照
-const flippingLines = computed(() => {
-  if (!flippingChapter.value || !flippingChapter.value.content) return []
-  return flippingChapter.value.content.split('。').filter(line => line.trim())
+// 覆盖滑层携带的内容：forward 新章滑入覆盖，back 旧章滑出
+const flipLines = computed(() => {
+  const chapter = flipDir.value === 'forward' ? pendingChapter.value : flippingChapter.value
+  if (!chapter || !chapter.content) return []
+  return chapter.content.split('。').filter(line => line.trim())
 })
 
 const anyPanelOpen = computed(() =>
@@ -372,9 +366,9 @@ const anyPanelOpen = computed(() =>
 const hasPrevChapter = computed(() => currentChapter.value.id > 1)
 const hasNextChapter = computed(() => currentChapter.value.id < 81)
 
-// 点击热区仅在仿真翻页、非入定、无面板弹层时启用
+// 点击热区仅在覆盖翻页、非入定、无面板弹层时启用
 const showTapZones = computed(() =>
-  pageMode.value === 'curl' && !zenMode.value && !anyPanelOpen.value
+  pageMode.value === 'cover' && !zenMode.value && !anyPanelOpen.value
 )
 
 const canSendComment = computed(() => {
@@ -439,14 +433,15 @@ const nextChapter = () => {
   flipToChapter(currentChapter.value.id + 1, 'forward')
 }
 
-// 仿真翻页动画时长（毫秒），与 CSS 动画时长保持一致
-const FLIP_MS = 700
+// 覆盖翻页动画时长（毫秒）：滑层动画由 CoverPage 内的纯 CSS 关键帧播放，
+// JS 只需等动画播完再收尾，不逐帧参与
+const FLIP_MS = 500
 let flipTimer = null
 
-// 按翻页方式切换章节：滑动模式直接加载；仿真模式旧章纸页整页翻起，新章从下方露出
+// 按翻页方式切换章节：滑动模式直接加载；覆盖模式滑层移入/移出（forward 滑入覆盖 / back 滑出）
 const flipToChapter = async (chapterId, dir) => {
   if (isFlipping.value) return
-  if (pageMode.value !== 'curl') {
+  if (pageMode.value !== 'cover') {
     await loadChapterDetail(chapterId)
     return
   }
@@ -454,16 +449,15 @@ const flipToChapter = async (chapterId, dir) => {
   flipDir.value = dir
   flipStage.value = 'out'
   try {
-    // 数据加载与翻页动画并行；用 setTimeout 对齐动画节奏（小程序端 animationend 事件名不一致）
+    // 数据加载与纸张卷曲动画并行；forward 时新章就绪即铺到底层，back 时渲染在铺回的纸面上
     const [detail] = await Promise.all([
       getChapterDetail(chapterId).then((result) => {
-        // 新章内容就绪即渲染到底层，翻页过程中从纸页下方逐渐露出
         pendingChapter.value = result
         return result
       }),
       new Promise((resolve) => { flipTimer = setTimeout(resolve, FLIP_MS) })
     ])
-    // 纸页翻落、新章就绪：提交新章并收尾
+    // 纸页落定、新章就绪：提交新章并收尾
     currentChapter.value = detail
     if (userStore.isLoggedIn()) {
       await updateProgress(chapterId)
@@ -616,7 +610,7 @@ const resetFontSize = () => {
   uni.setStorageSync('fontSize', fontSize.value)
 }
 
-// 切换翻页方式并持久化
+// 切换翻页方式并持久化（取值：'swipe' 左右滑动 | 'cover' 覆盖翻页）
 const setPageMode = (mode) => {
   pageMode.value = mode
   uni.setStorageSync('pageMode', mode)
@@ -790,9 +784,10 @@ onMounted(async () => {
       uni.setStorageSync('fontSize', fontSize.value)
     }
 
-    // 恢复翻页方式（非法值回落默认的左右滑动）
+    // 恢复翻页方式（旧版存过的 'curl' 一律映射为现在的 'cover'，其余非法值回落默认）
     const savedPageMode = uni.getStorageSync('pageMode')
-    if (savedPageMode === 'swipe' || savedPageMode === 'curl') pageMode.value = savedPageMode
+    if (savedPageMode === 'swipe' || savedPageMode === 'cover') pageMode.value = savedPageMode
+    else if (savedPageMode === 'curl') pageMode.value = 'cover'
 
     // 加载章节数据
     await loadChapters()
@@ -1043,8 +1038,7 @@ onUnmounted(() => {
   padding: 10px 40px 70px;
   z-index: 10;
   position: relative;
-  /* 仿真翻页的 3D 透视 */
-  perspective: 1600px;
+  /* 覆盖翻页为纯 2D 平移，无需 3D 透视 */
 }
 
 .chapter-container {
@@ -1194,12 +1188,6 @@ onUnmounted(() => {
   }
 
   .main-content {
-    padding-bottom: 40px;
-  }
-
-  // 纸页内边距与主内容保持一致，翻起时版式不错位
-  .flip-sheet-front,
-  .flip-sheet-back {
     padding-bottom: 40px;
   }
 }
@@ -1783,90 +1771,7 @@ onUnmounted(() => {
   right: 0;
 }
 
-// 仿真翻页：整页翻起的纸页（参考微信读书仿真效果）
-// 正面为旧章内容，绕书脊侧翻起 180°；背面为纸背渐变；新章内容在下方露出
-.flip-sheet {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 25;
-  transform-style: preserve-3d;
-  pointer-events: none;
-}
-
-.flip-sheet-front,
-.flip-sheet-back {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 10px 40px 70px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  background: var(--page-bg, #0e0e0e);
-}
-
-// 纸背：随翻起角度受光，用不对称渐变模拟纸张背面
-.flip-sheet-back {
-  transform: rotateY(180deg);
-  background: linear-gradient(105deg, rgba(0, 0, 0, 0.82) 0%, rgba(255, 255, 255, 0.07) 45%, rgba(0, 0, 0, 0.38) 100%);
-}
-
-// 正面纸页上的阴影：靠近书脊一侧随翻起加深
-.flip-sheet-shade {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  animation: sheetShade 0.7s ease-in forwards;
-}
-
-.sheet-forward .flip-sheet-shade {
-  background: linear-gradient(to right, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 55%);
-}
-
-.sheet-back .flip-sheet-shade {
-  background: linear-gradient(to left, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 55%);
-}
-
-@keyframes sheetShade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.sheet-forward {
-  transform-origin: left center;
-  animation: sheetOutF 0.7s cubic-bezier(0.35, 0, 0.25, 1) forwards;
-}
-
-.sheet-back {
-  transform-origin: right center;
-  animation: sheetOutB 0.7s cubic-bezier(0.35, 0, 0.25, 1) forwards;
-}
-
-// 翻起节奏：先快速掀角，中段过半，末段缓缓落纸（接近真实纸张阻尼）
-@keyframes sheetOutF {
-  0% { transform: rotateY(0); }
-  35% { transform: rotateY(-55deg); }
-  70% { transform: rotateY(-135deg); }
-  100% { transform: rotateY(-180deg); }
-}
-
-@keyframes sheetOutB {
-  0% { transform: rotateY(0); }
-  35% { transform: rotateY(55deg); }
-  70% { transform: rotateY(135deg); }
-  100% { transform: rotateY(180deg); }
-}
+// 覆盖翻页的滑层视觉（滑层版式、左缘投影、出入场缓动）在 components/CoverPage.vue 内实现
 
 // 遮罩层
 .overlay {

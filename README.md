@@ -26,6 +26,8 @@ minilt/
 | MySQL | 8.x | 需运行在 3306，账号默认 root/root（可用环境变量覆盖） |
 | Node.js | 22 | 前端两个工程都用 |
 | 微信开发者工具 | 最新稳定版 | 仅小程序端需要 |
+| HBuilderX | 5.x（与 uni-app 编译器版本匹配） | 仅 App（Android/iOS）与 HarmonyOS 端运行/打包需要 |
+| DevEco Studio | 5.0+ | 仅 HarmonyOS 真机运行/打 hap 包需要 |
 
 ---
 
@@ -92,6 +94,20 @@ npm run dev
 
 打开 http://localhost:5174 ，用 `admin` / `admin123` 登录。同样已配置 `/api` 代理到 `:8080`。
 
+### 5. 用户端 app/ — App（Android / iOS）与 HarmonyOS
+
+App 与鸿蒙端编译产物只是资源/应用包，**真机运行与出包需经 HBuilderX**（鸿蒙上真机还需 DevEco Studio 与签名证书）：
+
+```bash
+cd app
+npm run dev:app             # Android/iOS App 资源（两端共用一套），监听改动 → app/dist/dev/app
+npm run dev:app-harmony     # HarmonyOS 应用资源，监听改动 → app/dist/dev/app-harmony
+```
+
+用 HBuilderX 导入 `app/dist/dev/app`（或 `app-harmony`）目录，选择对应基座运行到设备；正式出包用 `build:*` 的产物走 HBuilderX 云打包/离线打包。
+
+**接口地址注意**：`app/src/utils/request.js` 的 `#ifndef H5` 分支对 App/鸿蒙端生效，开发期写死 `http://localhost:8080/api`。真机上 `localhost` 指向设备自身，需改为电脑内网 IP；Android 模拟器用 `http://10.0.2.2:8080/api`（模拟器访问宿主机）。App 端没有跨域限制，无需代理。
+
 ---
 
 ## 构建产物
@@ -105,6 +121,12 @@ cd app && npm run build:h5
 
 # 用户端小程序 → app/dist/build/mp-weixin
 cd app && npm run build:mp-weixin
+
+# 用户端 App（Android/iOS 共用）→ app/dist/build/app
+cd app && npm run build:app
+
+# 用户端 HarmonyOS → app/dist/build/app-harmony
+cd app && npm run build:app-harmony
 
 # 管理后台 → admin/dist
 cd admin && npm run build
@@ -228,3 +250,12 @@ curl -X POST http://localhost:8080/api/comments \
 
 **管理后台刷新页面 404**
 Nginx 缺 `try_files ... /index.html` 回退配置，见上方参考配置。
+
+**手机/其他设备用内网 IP 访问不了 H5 与管理后台**
+两个工程的 vite 配置已设 `server.host: true`（监听所有网卡），直接用 `http://<电脑内网IP>:5173` / `:5174` 访问。若仍不通，通常是 Windows 防火墙拦截（WLAN 被归为「公用网络」时必拦），放行开发端口后重试：
+
+```bash
+netsh advfirewall firewall add rule name="minilt-dev-ports" dir=in action=allow protocol=TCP localport=5173,5174,8080
+```
+
+小程序真机调试还需把 `app/src/utils/request.js` 开发环境地址 `localhost` 改为电脑内网 IP（Android 模拟器访问宿主机用 `10.0.2.2`）。
