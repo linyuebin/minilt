@@ -4,7 +4,10 @@
     <CustomBackground />
 
     <view class="page-header">
-      <text class="page-title">我的点赞</text>
+      <view class="icon-btn" @click="goBack">
+        <text class="material-symbols-outlined">arrow_back</text>
+      </view>
+      <text class="page-title">点赞</text>
     </view>
 
     <scroll-view scroll-y class="likes-list">
@@ -51,6 +54,13 @@ import { getMyLikes } from '@/api'
 
 const theme = useThemeStore()
 
+// 返回个人中心
+const goBack = () => {
+  uni.navigateBack({
+    fail: () => uni.switchTab({ url: '/pages/profile/index' })
+  })
+}
+
 const likes = ref([])
 const loading = ref(false)
 
@@ -94,6 +104,9 @@ const jumpToChapter = (chapterId) => {
 }
 
 .page-header {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
   margin-bottom: 40rpx;
 
   .page-title {

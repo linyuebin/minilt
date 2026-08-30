@@ -8,7 +8,12 @@ const PROD_API = 'https://api.daodejing.com/api'
 const BASE_URL = DEV ? '/api' : PROD_API
 // #endif
 
-// #ifndef H5
+// #ifdef APP-PLUS
+// App 真机调试：localhost 指向手机自身，必须用电脑内网 IP；电脑换网络后同步更新
+const BASE_URL = DEV ? 'http://10.178.150.7:8080/api' : PROD_API
+// #endif
+
+// #ifndef H5 || APP-PLUS
 const BASE_URL = DEV ? 'http://localhost:8080/api' : PROD_API
 // #endif
 

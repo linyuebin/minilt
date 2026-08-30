@@ -3,8 +3,8 @@
     <!-- 自定义背景层 -->
     <CustomBackground />
 
-    <!-- H5端账密登录表单 -->
-    <!-- #ifdef H5 -->
+    <!-- H5/App端账密登录表单 -->
+    <!-- #ifdef H5 || APP-PLUS -->
     <view class="h5-login">
       <view class="logo-section">
         <text class="logo-text">道德经</text>
@@ -309,8 +309,8 @@ const handleGuestLogin = () => {
   z-index: 1;
 }
 
-// H5端样式
-// #ifdef H5
+// H5/App端样式
+// #ifdef H5 || APP-PLUS
 .h5-login {
   width: 100%;
   max-width: 480px;

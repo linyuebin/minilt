@@ -13,11 +13,11 @@
     :class="{ 'tp-active': show }"
     :style="{ zIndex: zIndex, paddingBottom: paddingBottom }"
   >
+    <!-- 顶部横线指示条，与阅读页面板一致，点击也可关闭 -->
+    <view class="tp-handle" @click="close"></view>
+
     <view class="tp-header">
       <view class="tp-title">{{ title }}</view>
-      <view class="tp-close" @click="close">
-        <text class="material-symbols-outlined">close</text>
-      </view>
     </view>
 
     <scroll-view scroll-y class="tp-scroll">
@@ -182,27 +182,29 @@ const handleReset = () => {
   transform: translateY(0);
 }
 
+/* 顶部横线指示条，与阅读页 .panel-handle 同款 */
+.tp-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--text-3);
+  margin: 0 auto 18px;
+  flex-shrink: 0;
+}
+
+/* 标题与阅读页「经文释义」标签同款：居中 + accent 色 + 宽字距 */
 .tp-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   margin-bottom: 20px;
 }
 .tp-title {
-  font-size: 18px;
-  color: var(--text-1, #e2e2e2);
-  letter-spacing: 2px;
-}
-.tp-close {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
-  background: var(--surface-1, rgba(255, 255, 255, 0.03));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-2, rgba(248, 246, 242, 0.8));
+  font-size: 12px;
+  letter-spacing: 4px;
+  text-align: center;
+  color: var(--accent);
+  opacity: 0.8;
 }
 
 .tp-scroll {

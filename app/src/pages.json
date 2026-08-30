@@ -32,21 +32,21 @@
     {
       "path": "pages/profile/comments",
       "style": {
-        "navigationBarTitleText": "我的留言",
+        "navigationBarTitleText": "感悟",
         "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/profile/likes",
       "style": {
-        "navigationBarTitleText": "我的点赞",
+        "navigationBarTitleText": "点赞",
         "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/profile/replies",
       "style": {
-        "navigationBarTitleText": "历史回复",
+        "navigationBarTitleText": "互动",
         "navigationStyle": "custom"
       }
     },

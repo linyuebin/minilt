@@ -4,7 +4,10 @@
     <CustomBackground />
 
     <view class="page-header">
-      <text class="page-title">历史回复</text>
+      <view class="icon-btn" @click="goBack">
+        <text class="material-symbols-outlined">arrow_back</text>
+      </view>
+      <text class="page-title">互动</text>
     </view>
 
     <scroll-view scroll-y class="replies-list">
@@ -56,6 +59,13 @@ import { getMyReplies } from '@/api'
 
 const theme = useThemeStore()
 
+// 返回个人中心
+const goBack = () => {
+  uni.navigateBack({
+    fail: () => uni.switchTab({ url: '/pages/profile/index' })
+  })
+}
+
 const replies = ref([])
 const loading = ref(false)
 
@@ -99,6 +109,9 @@ const jumpToChapter = (chapterId) => {
 }
 
 .page-header {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
   margin-bottom: 40rpx;
 
   .page-title {
