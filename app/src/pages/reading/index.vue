@@ -70,10 +70,12 @@
         <view v-if="showTapZones" class="tap-zone tap-zone-right" @click.stop="nextChapter"></view>
       </view>
 
-      <!-- 入定模式：底部上划提示 -->
-      <view v-if="zenMode" class="zen-swipe-hint" @click.stop="exitZenMode">
-        <text class="material-symbols-outlined zen-hint-icon">keyboard_double_arrow_up</text>
-        <text class="zen-hint-text">上划退出入定</text>
+      <!-- 入定模式：底部上划提示（外层全宽容器 flex 居中，胶囊不做 transform 定位，避免动画/端差异导致水平偏移） -->
+      <view v-if="zenMode" class="zen-hint-wrap">
+        <view class="zen-swipe-hint" @click.stop="exitZenMode">
+          <text class="material-symbols-outlined zen-hint-icon">keyboard_double_arrow_up</text>
+          <text class="zen-hint-text">上划退出入定</text>
+        </view>
       </view>
 
       <!-- 底部工具栏：目录 / 横竖排 / 释义 / 修行设置，四键均匀分布，入定模式下收起 -->
@@ -1087,12 +1089,20 @@ onUnmounted(() => {
   padding: 2rem 0;
 }
 
-// 入定模式：底部上划提示
-.zen-swipe-hint {
+// 入定模式：底部上划提示（全宽容器 flex 居中，水平居中由布局保证，不依赖 transform）
+.zen-hint-wrap {
   position: fixed;
-  left: 50%;
+  left: 0;
+  right: 0;
   bottom: calc(28px + env(safe-area-inset-bottom));
-  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 60;
+}
+
+.zen-swipe-hint {
+  pointer-events: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1102,7 +1112,6 @@ onUnmounted(() => {
   background: var(--accent-05);
   border: 1px solid var(--accent-15);
   cursor: pointer;
-  z-index: 60;
   animation: hint-float 3s ease-in-out infinite;
   transition: opacity 0.3s ease;
 }
@@ -1124,8 +1133,8 @@ onUnmounted(() => {
 }
 
 @keyframes hint-float {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(-4px); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
 // 底部工具栏：目录 / 释义 / 横竖排 / 修行设置，四键 space-between 均匀分布

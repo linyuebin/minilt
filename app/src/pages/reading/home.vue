@@ -139,7 +139,11 @@ const retryLoad = () => {
 
 <style lang="scss" scoped>
 .reading-home {
-  min-height: 100vh;
+  /* flex + 首尾 margin:auto，让内容组合后在可视区内纵向居中；内容超高时仍可正常滚动 */
+  display: flex;
+  flex-direction: column;
+  /* H5 端 tabbar 占位（--window-bottom 由 uni 注入，App 端原生 tabbar 不占 webview 高度） */
+  min-height: calc(100vh - var(--window-bottom, 0px));
   background: var(--page-bg-alt);
   color: var(--text-1);
   font-family: "KaiTi", "STKaiti", "KaiTi_GB2312", "Songti SC", serif;
@@ -218,6 +222,8 @@ const retryLoad = () => {
 
 .home-header {
   text-align: center;
+  /* 顶部 auto margin：与底部 auto margin 一起，把中间内容组合后纵向居中 */
+  margin-top: auto;
   margin-bottom: 50px;
   animation: fade-in 1s ease-out;
 }
@@ -367,7 +373,9 @@ const retryLoad = () => {
 
 .home-footer {
   text-align: center;
+  /* 底部 auto margin：配合顶部，把内容组合后纵向居中；40px 为 tabbar 预留的滚动余量 */
   margin-top: 60px;
+  margin-bottom: auto;
   padding-bottom: 40px;
   opacity: 0.4;
 }
