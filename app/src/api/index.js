@@ -1,4 +1,4 @@
-import { get, post, put, del } from '@/utils/request'
+import { get, post, put, del, uploadFile } from '@/utils/request'
 
 // ============= 用户认证相关 =============
 // H5注册
@@ -25,12 +25,18 @@ export const getChapterComments = (chapterId) => {
   return get(`/chapters/${chapterId}/comments`)
 }
 
+// 社区广场：所有道友的感悟（filter: all/featured/dao/de，分页）
+export const getCommunityFeed = (params) => get('/comments/feed', params)
+
 // 更新阅读进度
 export const updateProgress = (chapterId) => put('/users/me/progress', { chapterId })
 
 // ============= 评论相关 =============
 // 发布评论/回复
 export const createComment = (data) => post('/comments', data)
+
+// 上传留言配图（单张，返回 { url: '/api/upload/xx.jpg' }）
+export const uploadCommentImage = (filePath) => uploadFile('/upload/image', filePath)
 
 // 点赞/取消点赞评论
 export const toggleCommentLike = (commentId) => post(`/comments/${commentId}/like`)
@@ -55,6 +61,10 @@ export const getMyReplies = (params) => get('/users/me/replies', params)
 // 我的点赞
 export const getMyLikes = (params) => get('/users/me/likes', params)
 
+// ============= 诵读音频相关 =============
+// 可用音色列表（[{ voiceKey, voiceName, count }]）
+export const getAudioVoices = () => get('/audio/voices')
+
 export default {
   // 认证
   register,
@@ -65,9 +75,11 @@ export default {
   getChapters,
   getChapterDetail,
   getChapterComments,
+  getCommunityFeed,
   updateProgress,
   // 评论
   createComment,
+  uploadCommentImage,
   toggleCommentLike,
   // 收藏
   addFavorite,
@@ -76,5 +88,7 @@ export default {
   // 个人中心
   getMyComments,
   getMyReplies,
-  getMyLikes
+  getMyLikes,
+  // 诵读音频
+  getAudioVoices
 }

@@ -1,7 +1,10 @@
 package com.daodejing.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.daodejing.common.BizException;
+import com.daodejing.common.PageResult;
 import com.daodejing.config.AuthContext;
 import com.daodejing.dto.CommentDtos.*;
 import com.daodejing.entity.Chapter;
@@ -56,13 +59,20 @@ public class CommentService {
     @Transactional
     public CommentVO create(CommentReq req) {
         long userId = AuthContext.userId();
-        Chapter chapter = chapterMapper.selectById(req.chapterId());
-        if (chapter == null) throw new BizException("章节不存在");
+        // chapterId 可空：null = 不引用正文的随笔
+        if (req.chapterId() != null && chapterMapper.selectById(req.chapterId()) == null) {
+            throw new BizException("章节不存在");
+        }
 
         Comment comment = new Comment();
         comment.setChapterId(req.chapterId());
         comment.setUserId(userId);
         comment.setContent(req.content().trim());
+
+        // 配图仅顶级留言支持（回复保持纯文本），最多3张且只收本站上传的相对路径
+        if (req.parentId() == null) {
+            comment.setImages(cleanImages(req.images()));
+        }
 
         if (req.parentId() != null) {
             Comment parent = commentMapper.selectById(req.parentId());
@@ -126,7 +136,7 @@ public class CommentService {
                     .eq(Comment::getParentId, c.getId()).eq(Comment::getStatus, 0));
             return new MyCommentVO(c.getId(), c.getChapterId(),
                     titles.getOrDefault(c.getChapterId(), ""),
-                    c.getContent(), c.getLikeCount(), replyCount.intValue(),
+                    c.getContent(), c.getImages(), c.getLikeCount(), replyCount.intValue(),
                     c.getCreatedAt().format(TIME_FMT));
         }).toList();
     }
@@ -154,7 +164,7 @@ public class CommentService {
                     titles.getOrDefault(c.getChapterId(), ""),
                     target == null ? "" : target.getNickname(),
                     parent == null ? "" : parent.getContent(),
-                    c.getContent(), c.getCreatedAt().format(TIME_FMT));
+                    c.getContent(), c.getImages(), c.getCreatedAt().format(TIME_FMT));
         }).toList();
     }
 
@@ -181,8 +191,56 @@ public class CommentService {
                     return new MyLikeVO(c.getId(), c.getChapterId(),
                             titles.getOrDefault(c.getChapterId(), ""),
                             author == null ? "" : author.getNickname(),
-                            c.getContent(), c.getCreatedAt().format(TIME_FMT));
+                            c.getContent(), c.getImages(), c.getLikeCount(),
+                            c.getCreatedAt().format(TIME_FMT));
                 }).toList();
+    }
+
+    /** 精选心得门槛：点赞数达到该值的顶级留言进入精选 */
+    private static final int FEATURED_MIN_LIKES = 3;
+
+    /** 社区广场：所有道友的顶级感悟（filter: all 全部 / featured 精选 / dao 道经1-37 / de 德经38-81） */
+    public PageResult<FeedVO> feed(String filter, int page, int size) {
+        LambdaQueryWrapper<Comment> qw = new LambdaQueryWrapper<Comment>()
+                .eq(Comment::getStatus, 0)
+                .isNull(Comment::getParentId);
+        if ("featured".equals(filter)) {
+            qw.ge(Comment::getLikeCount, FEATURED_MIN_LIKES);
+            qw.orderByDesc(Comment::getLikeCount).orderByDesc(Comment::getCreatedAt);
+        } else {
+            if ("dao".equals(filter)) {
+                qw.between(Comment::getChapterId, 1, 37);
+            } else if ("de".equals(filter)) {
+                qw.between(Comment::getChapterId, 38, 81);
+            }
+            qw.orderByDesc(Comment::getCreatedAt);
+        }
+
+        Page<Comment> p = commentMapper.selectPage(new Page<>(page, Math.min(size, 50)), qw);
+        List<Comment> records = p.getRecords();
+        if (records.isEmpty()) return new PageResult<>(0, List.of());
+
+        Map<Long, User> users = loadUsers(records.stream().map(Comment::getUserId).collect(Collectors.toSet()));
+        Map<Integer, Chapter> chapters = chapterMap(
+                records.stream().map(Comment::getChapterId).filter(Objects::nonNull).collect(Collectors.toSet()));
+        Map<Long, Integer> replyCounts = replyCounts(records.stream().map(Comment::getId).toList());
+        Set<Long> likedIds = loadMyLikedIds(records);
+
+        List<FeedVO> vos = records.stream().map(c -> {
+            User author = users.get(c.getUserId());
+            Chapter ch = c.getChapterId() == null ? null : chapters.get(c.getChapterId());
+            return new FeedVO(c.getId(), c.getUserId(),
+                    author == null ? "道友" : author.getNickname(),
+                    author == null ? "道" : author.getAvatarChar(),
+                    c.getChapterId(),
+                    ch == null ? null : ch.getTitle(),
+                    ch == null ? null : excerpt(ch.getContent()),
+                    c.getContent(), c.getImages(), c.getLikeCount(),
+                    likedIds.contains(c.getId()),
+                    replyCounts.getOrDefault(c.getId(), 0),
+                    c.getCreatedAt().format(TIME_FMT));
+        }).toList();
+        return new PageResult<>(p.getTotal(), vos);
     }
 
     // ===== helpers =====
@@ -203,9 +261,23 @@ public class CommentService {
         return new CommentVO(c.getId(), c.getUserId(),
                 author == null ? "道友" : author.getNickname(),
                 author == null ? "道" : author.getAvatarChar(),
-                c.getContent(), c.getLikeCount(),
+                c.getContent(), c.getImages(), c.getLikeCount(),
                 likedIds.contains(c.getId()),
                 c.getCreatedAt().format(TIME_FMT), replyVOs);
+    }
+
+    /** 配图清洗：最多3张，只保留本站上传接口返回的相对路径 */
+    private List<String> cleanImages(List<String> images) {
+        if (images == null || images.isEmpty()) return null;
+        List<String> cleaned = images.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .filter(s -> s.startsWith("/api/upload/"))
+                .distinct()
+                .limit(3)
+                .toList();
+        return cleaned.isEmpty() ? null : cleaned;
     }
 
     private Map<Long, User> loadUsers(Set<Long> ids) {
@@ -236,5 +308,34 @@ public class CommentService {
         if (ids.isEmpty()) return Map.of();
         return chapterMapper.selectBatchIds(ids).stream()
                 .collect(Collectors.toMap(Chapter::getId, Chapter::getTitle));
+    }
+
+    /** 批量取章节实体（广场流引用的正文摘录用） */
+    private Map<Integer, Chapter> chapterMap(Set<Integer> ids) {
+        if (ids.isEmpty()) return Map.of();
+        return chapterMapper.selectBatchIds(ids).stream()
+                .collect(Collectors.toMap(Chapter::getId, c -> c));
+    }
+
+    /** 批量统计一批留言的回复数（一条 group by 查询） */
+    private Map<Long, Integer> replyCounts(List<Long> ids) {
+        if (ids.isEmpty()) return Map.of();
+        Map<Long, Integer> result = new HashMap<>();
+        for (Map<String, Object> row : commentMapper.selectMaps(new QueryWrapper<Comment>()
+                .select("parent_id", "COUNT(*) AS cnt")
+                .in("parent_id", ids)
+                .eq("status", 0)
+                .groupBy("parent_id"))) {
+            Number pid = row.get("parent_id") != null ? (Number) row.get("parent_id") : (Number) row.get("parentId");
+            Number cnt = row.get("cnt") != null ? (Number) row.get("cnt") : (Number) row.get("CNT");
+            if (pid != null && cnt != null) result.put(pid.longValue(), cnt.intValue());
+        }
+        return result;
+    }
+
+    /** 引用正文摘录：截取开头至多40字 */
+    private String excerpt(String content) {
+        if (content == null || content.length() <= 40) return content;
+        return content.substring(0, 40) + "……";
     }
 }

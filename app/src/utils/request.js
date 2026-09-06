@@ -10,12 +10,60 @@ const BASE_URL = DEV ? '/api' : PROD_API
 
 // #ifdef APP-PLUS
 // App 真机调试：localhost 指向手机自身，必须用电脑内网 IP；电脑换网络后同步更新
-const BASE_URL = DEV ? 'http://10.178.150.7:8080/api' : PROD_API
+const BASE_URL = DEV ? 'http://10.52.1.7:8080/api' : PROD_API
 // #endif
 
 // #ifndef H5 || APP-PLUS
 const BASE_URL = DEV ? 'http://localhost:8080/api' : PROD_API
 // #endif
+
+// 文件上传封装（uni.request 不支持 multipart，走 uni.uploadFile）
+export const uploadFile = (url, filePath, name = 'file') => {
+  return new Promise((resolve, reject) => {
+    const token = uni.getStorageSync('token')
+    uni.uploadFile({
+      url: BASE_URL + url,
+      filePath,
+      name,
+      header: token ? { Authorization: `Bearer ${token}` } : {},
+      success: (res) => {
+        try {
+          const { code, msg, data } = JSON.parse(res.data)
+          if (code === 0) {
+            resolve(data)
+          } else {
+            uni.showToast({ title: msg || '上传失败', icon: 'none', duration: 2000 })
+            reject(new Error(msg || '上传失败'))
+          }
+        } catch (e) {
+          console.error('上传响应解析失败:', e)
+          reject(e)
+        }
+      },
+      fail: (err) => {
+        console.error('上传失败:', err)
+        uni.showToast({ title: '网络上传失败', icon: 'none', duration: 2000 })
+        reject(err)
+      }
+    })
+  })
+}
+
+// 媒体地址补全：后端返回相对路径（/api/upload/xx.jpg、/api/audio/xiaoxiao/1），
+// H5 开发期同源可直接用（vite 代理），App/小程序需要补全服务器域名
+export const resolveMediaUrl = (url) => {
+  if (!url) return ''
+  if (/^(https?:|blob:|data:)/.test(url)) return url
+  // #ifdef H5
+  return url
+  // #endif
+  // #ifndef H5
+  return BASE_URL.replace(/\/api\/?$/, '') + url
+  // #endif
+}
+
+// 图片地址补全（媒体地址的别名，语义化保留）
+export const resolveImageUrl = (url) => resolveMediaUrl(url)
 
 // 请求封装
 export const request = (options) => {

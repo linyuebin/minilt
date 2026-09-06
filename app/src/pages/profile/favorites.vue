@@ -40,6 +40,9 @@
         <text>加载中...</text>
       </view>
     </scroll-view>
+
+    <!-- 后台诵读悬浮条 -->
+    <AudioBar :tab-bar="false" />
   </view>
 </template>
 
@@ -47,6 +50,7 @@
 import { ref, onMounted } from 'vue'
 import { useThemeStore } from '@/store/theme'
 import CustomBackground from '@/components/CustomBackground.vue'
+import AudioBar from '@/components/AudioBar.vue'
 import { getFavorites } from '@/api'
 
 const theme = useThemeStore()

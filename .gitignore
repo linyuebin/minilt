@@ -15,3 +15,6 @@ Thumbs.db
 # 本地环境覆盖
 .env.local
 *.local
+
+# 诵读音频源文件（启动时由 AudioImportRunner 入库，不入 git）
+voice/

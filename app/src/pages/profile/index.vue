@@ -88,6 +88,9 @@
 
     <!-- 底部tabBar占位空间 -->
     <view class="tabbar-placeholder"></view>
+
+    <!-- 后台诵读悬浮条 -->
+    <AudioBar />
   </view>
 </template>
 
@@ -96,6 +99,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { useThemeStore } from '@/store/theme'
 import CustomBackground from '@/components/CustomBackground.vue'
+import AudioBar from '@/components/AudioBar.vue'
 
 const userStore = useUserStore()
 const theme = useThemeStore()

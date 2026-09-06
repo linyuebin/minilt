@@ -15,12 +15,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // 与 icon-names.txt 保持一致；动态绑定的图标（如三元表达式）也要列进来
 const ICONS = [
-  'add', 'arrow_back', 'arrow_forward', 'arrow_forward_ios', 'auto_awesome',
-  'auto_stories', 'chat_bubble', 'chevron_right', 'close', 'error_outline',
+  'add', 'add_photo_alternate', 'arrow_back', 'arrow_forward', 'arrow_forward_ios', 'auto_awesome',
+  'auto_stories', 'chat_bubble', 'check_box', 'check_box_outline_blank', 'chevron_right',
+  'close', 'edit', 'error_outline',
   'expand_more', 'favorite', 'forum', 'group', 'help',
   'history', 'hourglass_empty', 'image',
-  'keyboard_double_arrow_up', 'lock', 'logout', 'menu', 'menu_book', 'person',
-  'remove', 'reply', 'restart_alt', 'rotate_90_degrees_ccw', 'send',
+  'keyboard_double_arrow_up', 'lock', 'logout', 'menu', 'menu_book', 'pause_circle', 'person',
+  'play_circle', 'remove', 'reply', 'restart_alt', 'rotate_90_degrees_ccw', 'send',
   'settings', 'spa', 'thumb_up', 'thumb_up_off', 'thumb_up_off_alt',
   'visibility'
 ]

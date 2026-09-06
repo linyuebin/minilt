@@ -26,11 +26,12 @@ CREATE TABLE IF NOT EXISTS `chapter` (
 
 CREATE TABLE IF NOT EXISTS `comment` (
     `id`               BIGINT        NOT NULL AUTO_INCREMENT,
-    `chapter_id`       INT           NOT NULL,
+    `chapter_id`       INT           NULL COMMENT '引用章节，NULL=不引用正文的随笔',
     `user_id`          BIGINT        NOT NULL,
     `parent_id`        BIGINT        NULL COMMENT '空=顶级留言，否则为所回复的顶级留言id',
     `reply_to_user_id` BIGINT        NULL COMMENT '被回复人',
     `content`          VARCHAR(1000) NOT NULL,
+    `images`           VARCHAR(1000) NULL COMMENT '配图URL列表（JSON数组，最多3张）',
     `like_count`       INT           NOT NULL DEFAULT 0,
     `status`           TINYINT       NOT NULL DEFAULT 0 COMMENT '0正常 1已删除',
     `created_at`       DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -67,3 +68,16 @@ CREATE TABLE IF NOT EXISTS `admin_user` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_username` (`username`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT ='管理端账号';
+
+CREATE TABLE IF NOT EXISTS `chapter_audio` (
+    `id`         BIGINT      NOT NULL AUTO_INCREMENT,
+    `voice_key`  VARCHAR(32) NOT NULL COMMENT '音色标识 xiaoxiao/yunxia',
+    `voice_name` VARCHAR(32) NOT NULL COMMENT '音色名称 晓晓/云夏',
+    `chapter_id` INT         NOT NULL COMMENT '章节号 1-81',
+    `file_name`  VARCHAR(128) NOT NULL COMMENT '原始文件名',
+    `audio`      MEDIUMBLOB  NOT NULL COMMENT '音频内容（mp3，单节约170KB）',
+    `size_bytes` INT         NOT NULL,
+    `created_at` DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_voice_chapter` (`voice_key`, `chapter_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT ='经文诵读音频（分章）';

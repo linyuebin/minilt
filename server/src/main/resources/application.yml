@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: daodejing-server
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 35MB
   datasource:
     url: jdbc:mysql://localhost:3306/daodejing?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
@@ -27,6 +31,12 @@ mybatis-plus:
       id-type: auto
 
 app:
+  upload:
+    # 留言配图落盘目录（相对 server 工作目录），静态访问走 /api/upload/**
+    dir: ${UPLOAD_DIR:upload}
+  audio:
+    # 分章诵读音频导入目录（首次启动表为空时自动入库，之后以库为准）
+    import-dir: ${AUDIO_IMPORT_DIR:../voice}
   jwt:
     # 生产环境务必通过环境变量覆盖
     secret: ${JWT_SECRET:daodejing-dev-secret-key-change-me-in-production-0824}

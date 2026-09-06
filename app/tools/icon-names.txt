@@ -1,12 +1,16 @@
 add
+add_photo_alternate
 arrow_back
 arrow_forward
 arrow_forward_ios
 auto_awesome
 auto_stories
 chat_bubble
+check_box
+check_box_outline_blank
 chevron_right
 close
+edit
 error_outline
 expand_more
 favorite
@@ -21,7 +25,9 @@ lock
 logout
 menu
 menu_book
+pause_circle
 person
+play_circle
 remove
 reply
 restart_alt

@@ -21,7 +21,7 @@
     </view>
 
     <scroll-view scroll-y class="tp-scroll">
-      <!-- 配色方案 -->
+      <!-- 配色方案：保留最初的方块色卡样式 -->
       <view class="tp-section">
         <view class="tp-section-title">配色方案</view>
         <view class="tp-schemes">
@@ -39,9 +39,9 @@
         </view>
       </view>
 
-      <!-- 自定义背景 -->
-      <view class="tp-section">
-        <view class="tp-section-title">自定义背景</view>
+      <!-- 自定义背景：单行布局 -->
+      <view class="tp-row">
+        <view class="tp-row-label">背景</view>
         <view class="tp-bg-row">
           <image
             v-if="theme.customBg"
@@ -69,26 +69,54 @@
         </view>
       </view>
 
-      <!-- 页面级扩展区块（如阅读页的字体大小）；未传插槽时不渲染，避免空白模块 -->
-      <view v-if="$slots.extra" class="tp-section">
+      <!-- 页面级扩展区块（如阅读页的字体大小|翻页方式双列）；未传插槽时不渲染，避免空白模块 -->
+      <view v-if="$slots.extra" class="tp-extra">
         <slot name="extra"></slot>
       </view>
 
-      <!-- 重置 -->
-      <view class="tp-section">
-        <view class="tp-reset-btn" @click="handleReset">
-          <text class="material-symbols-outlined">restart_alt</text>
-          <text>重置为默认设置</text>
+      <!-- 诵读音色：两行四列 -->
+      <view class="tp-row tp-row-col">
+        <view class="tp-row-label">诵读音色</view>
+        <view class="tp-pills tp-pills-fill">
+          <view
+            v-for="v in voiceOptions"
+            :key="v.key"
+            class="tp-pill"
+            :class="{ 'tp-pill-active': audioStore.voiceKey === v.key }"
+            @click="audioStore.setVoice(v.key)"
+          >{{ v.name }}</view>
         </view>
+      </view>
+
+      <!-- 播放方式 -->
+      <view class="tp-row">
+        <view class="tp-row-label">播放方式</view>
+        <view class="tp-pills tp-pills-end">
+          <view
+            v-for="m in playModes"
+            :key="m.value"
+            class="tp-pill"
+            :class="{ 'tp-pill-active': audioStore.playMode === m.value }"
+            @click="audioStore.setPlayMode(m.value)"
+          >{{ m.label }}</view>
+        </view>
+      </view>
+
+      <!-- 重置 -->
+      <view class="tp-reset-btn" @click="handleReset">
+        <text class="material-symbols-outlined">restart_alt</text>
+        <text>重置为默认设置</text>
       </view>
     </scroll-view>
   </view>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useThemeStore, THEME_SCHEMES } from '@/store/theme'
+import { useAudioStore } from '@/store/audio'
 import { pickCustomBg } from '@/utils/background'
+import { getAudioVoices } from '@/api'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -103,13 +131,45 @@ const props = defineProps({
 const emit = defineEmits(['update:show', 'reset'])
 
 const theme = useThemeStore()
+const audioStore = useAudioStore()
 const schemes = THEME_SCHEMES
 
 const paddingBottom = computed(() =>
   props.aboveTabBar
-    ? 'calc(85px + env(safe-area-inset-bottom))'
-    : 'calc(35px + env(safe-area-inset-bottom))'
+    ? 'calc(24px + env(safe-area-inset-bottom))'
+    : 'calc(12px + env(safe-area-inset-bottom))'
 )
+
+// ===== 诵读音色 / 播放方式（全局 audio store，后台播放实时生效） =====
+// 后端未就绪时兜底音色；正常情况下以 /api/audio/voices 返回为准
+const VOICE_FALLBACK = [
+  { key: 'xiaoxiao', name: '晓晓' },
+  { key: 'yunxia', name: '云夏' }
+]
+const PLAY_MODES = [
+  { value: 'continuous', label: '连播' },
+  { value: 'loop', label: '循环本章' }
+]
+const voiceOptions = ref(VOICE_FALLBACK)
+const playModes = PLAY_MODES
+
+onMounted(async () => {
+  try {
+    const list = await getAudioVoices()
+    if (Array.isArray(list) && list.length) {
+      voiceOptions.value = list.map(v => ({ key: v.voiceKey, name: v.voiceName }))
+    }
+  } catch (e) {
+    // 拉取失败沿用兜底音色
+  }
+  // 存储值不合法时校正到第一项
+  if (!voiceOptions.value.some(v => v.key === audioStore.voiceKey)) {
+    audioStore.setVoice(voiceOptions.value[0].key)
+  }
+  if (!playModes.some(m => m.value === audioStore.playMode)) {
+    audioStore.setPlayMode(playModes[0].value)
+  }
+})
 
 const close = () => {
   emit('update:show', false)
@@ -163,14 +223,18 @@ const handleReset = () => {
   pointer-events: auto;
 }
 
-/* 面板：与阅读页底部面板同款动效 */
+/* 面板：与阅读页底部面板同款动效；高度随内容自适应，极小屏时在面板内滚动兜底 */
 .tp-sheet {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
+  max-height: 75vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   border-radius: 24px 24px 0 0;
-  padding: 25px 20px;
+  padding: 10px 16px;
   transform: translateY(100%);
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--panel-bg, rgba(18, 18, 18, 0.85));
@@ -184,11 +248,11 @@ const handleReset = () => {
 
 /* 顶部横线指示条，与阅读页 .panel-handle 同款 */
 .tp-handle {
-  width: 40px;
-  height: 4px;
+  width: 36px;
+  height: 3px;
   border-radius: 2px;
   background: var(--text-3);
-  margin: 0 auto 18px;
+  margin: 0 auto 6px;
   flex-shrink: 0;
 }
 
@@ -197,38 +261,65 @@ const handleReset = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  flex-shrink: 0;
+  margin-bottom: 6px;
 }
 .tp-title {
-  font-size: 12px;
-  letter-spacing: 4px;
+  font-size: 11px;
+  letter-spacing: 3px;
   text-align: center;
   color: var(--accent);
   opacity: 0.8;
 }
 
+/* 滚动区：正常内容一屏放完不滚动，超出时内滚兜底 */
 .tp-scroll {
-  max-height: 80vh;
+  flex-shrink: 1;
 }
 
+/* 卡片分区（配色方案保留最初的卡片样式） */
 .tp-section {
   background: var(--surface-1, rgba(255, 255, 255, 0.03));
   border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.06));
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 14px;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
 }
 .tp-section-title {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-3, rgba(255, 255, 255, 0.45));
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   letter-spacing: 2px;
 }
 
-/* 配色网格 */
+/* 设置行：标签居左 + 控件居右 */
+.tp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+}
+.tp-row,
+.tp-extra,
+.tp-reset-btn {
+  border-top: 1px solid var(--border-soft, rgba(255, 255, 255, 0.06));
+}
+.tp-row-col {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+.tp-row-label {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--text-3, rgba(255, 255, 255, 0.45));
+  letter-spacing: 2px;
+}
+
+/* 配色方块：恢复最初样式（楷体字 + 名称，正方形色卡） */
 .tp-schemes {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 .tp-scheme-item {
   flex: 1;
@@ -243,7 +334,7 @@ const handleReset = () => {
 }
 .tp-scheme-active {
   border-color: var(--accent, #d4af37);
-  box-shadow: 0 0 15px var(--accent-30, rgba(212, 175, 55, 0.3));
+  box-shadow: 0 0 12px var(--accent-30, rgba(212, 175, 55, 0.3));
 }
 .tp-scheme-char {
   font-size: 20px;
@@ -254,47 +345,52 @@ const handleReset = () => {
   color: var(--text-2, rgba(248, 246, 242, 0.8));
 }
 
-/* 自定义背景行 */
+/* 自定义背景行：预览 + 横排按钮，单行放完 */
 .tp-bg-row {
+  flex: 1;
   display: flex;
-  gap: 14px;
+  gap: 10px;
   align-items: center;
+  justify-content: flex-end;
 }
 .tp-bg-preview {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
 }
 .tp-bg-placeholder {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
   border: 1px dashed var(--border, rgba(255, 255, 255, 0.08));
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-3, rgba(255, 255, 255, 0.45));
 }
+.tp-bg-placeholder .material-symbols-outlined {
+  font-size: 16px;
+}
 .tp-bg-actions {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-direction: row;
+  gap: 8px;
 }
 .tp-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 14px;
-  border-radius: 10px;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 9px;
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
   background: var(--surface-2, rgba(255, 255, 255, 0.05));
   color: var(--text-1, #e2e2e2);
-  font-size: 13px;
+  font-size: 12px;
 }
 .tp-btn .material-symbols-outlined {
-  font-size: 16px;
+  font-size: 14px;
 }
 .tp-btn-primary {
   background: var(--accent-15, rgba(212, 175, 55, 0.15));
@@ -305,18 +401,67 @@ const handleReset = () => {
   opacity: 0.4;
 }
 
+/* 扩展区块（阅读页字体大小|翻页方式双列） */
+.tp-extra {
+  display: flex;
+  gap: 14px;
+  padding: 7px 0;
+}
+
+/* 音色/播放方式胶囊：音色两行四列铺满；播放方式行内靠右 */
+.tp-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tp-pills-fill {
+  flex: 1;
+}
+.tp-pills-fill .tp-pill {
+  flex: 1 1 calc(25% - 6px);
+  height: 32px;
+  padding: 0;
+  border-radius: 9px;
+  font-size: 13px;
+}
+.tp-pills-end {
+  flex: 1;
+  justify-content: flex-end;
+}
+.tp-pill {
+  height: 28px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  background: var(--surface-2, rgba(255, 255, 255, 0.05));
+  color: var(--text-2, rgba(248, 246, 242, 0.8));
+  font-size: 12px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.tp-pill-active {
+  border-color: var(--accent, #d4af37);
+  background: var(--accent-15, rgba(212, 175, 55, 0.15));
+  color: var(--accent, #d4af37);
+}
+
 /* 重置按钮 */
 .tp-reset-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 44px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 107, 107, 0.3);
+  gap: 6px;
+  height: 32px;
+  border-radius: 9px;
   background: rgba(255, 107, 107, 0.08);
   color: #ff6b6b;
-  font-size: 15px;
+  font-size: 12px;
   letter-spacing: 2px;
+}
+.tp-reset-btn .material-symbols-outlined {
+  font-size: 14px;
 }
 </style>

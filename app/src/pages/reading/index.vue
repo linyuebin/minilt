@@ -78,7 +78,7 @@
         </view>
       </view>
 
-      <!-- 底部工具栏：目录 / 横竖排 / 释义 / 修行设置，四键均匀分布，入定模式下收起 -->
+      <!-- 底部工具栏：目录 / 横竖排 / 诵读 / 释义 / 修行设置，五键均匀分布，入定模式下收起 -->
       <view class="bottom-toolbar" :class="{ 'toolbar-hidden': zenMode }">
         <view class="action-btn" @click.stop="toggleChapterDrawer">
           <text class="material-symbols-outlined">menu</text>
@@ -89,6 +89,13 @@
           @click.stop="toggleOrientation"
         >
           <text class="material-symbols-outlined">rotate_90_degrees_ccw</text>
+        </view>
+        <view
+          class="action-btn"
+          :class="{ 'active': isCurrentChapterPlaying }"
+          @click.stop="togglePlay"
+        >
+          <text class="material-symbols-outlined">{{ isCurrentChapterPlaying ? 'pause_circle' : 'play_circle' }}</text>
         </view>
         <view class="action-btn" @click.stop="toggleInterpretation">
           <text class="material-symbols-outlined">visibility</text>
@@ -167,6 +174,21 @@
                 <view class="comment-time">{{ shortTime(comment.createdAt) }}</view>
               </view>
               <view class="comment-text">{{ comment.content }}</view>
+              <!-- 留言配图：1张单图 / 2张两列 / 3张三列 -->
+              <view
+                v-if="comment.images && comment.images.length"
+                class="comment-images"
+                :class="'img-count-' + comment.images.length"
+              >
+                <view
+                  v-for="(img, imgIndex) in comment.images"
+                  :key="img"
+                  class="comment-image-item"
+                  @click="previewCommentImages(comment.images, imgIndex)"
+                >
+                  <image :src="resolveImageUrl(img)" mode="aspectFill" class="comment-image" />
+                </view>
+              </view>
               <view class="comment-actions">
                 <view
                   class="comment-action-btn"
@@ -227,15 +249,38 @@
         </view>
       </scroll-view>
 
-      <!-- 底部固定发表输入框 -->
+      <!-- 底部固定发表输入框（支持配图，最多3张） -->
       <view class="comment-input-section">
-        <input
-          v-model="newComment"
-          placeholder="写下你的感悟，结个善缘..."
-          class="comment-input"
-        />
-        <view class="send-btn" @click="sendComment">
-          <text class="material-symbols-outlined send-icon">send</text>
+        <!-- 已选图片预览条 -->
+        <view v-if="pendingImages.length" class="pending-images">
+          <view v-for="(img, idx) in pendingImages" :key="idx" class="pending-image-item">
+            <image
+              :src="img"
+              mode="aspectFill"
+              class="pending-image"
+              @click="previewPendingImage(idx)"
+            />
+            <view class="pending-image-remove" @click.stop="removePendingImage(idx)">
+              <text class="material-symbols-outlined remove-icon">close</text>
+            </view>
+          </view>
+          <view v-if="pendingImages.length < MAX_COMMENT_IMAGES" class="pending-image-add" @click="chooseCommentImages">
+            <text class="material-symbols-outlined">add</text>
+          </view>
+        </view>
+
+        <view class="input-row">
+          <view class="image-pick-btn" @click="chooseCommentImages">
+            <text class="material-symbols-outlined">add_photo_alternate</text>
+          </view>
+          <input
+            v-model="newComment"
+            placeholder="写下你的感悟，结个善缘..."
+            class="comment-input"
+          />
+          <view class="send-btn" :class="{ sending }" @click="sendComment">
+            <text class="material-symbols-outlined send-icon">send</text>
+          </view>
         </view>
       </view>
     </view>
@@ -243,29 +288,33 @@
     <!-- 修行设置面板（共享组件 + 阅读专属的字体大小区块） -->
     <ThemePanel v-model:show="showSettings" @reset="resetFontSize">
       <template #extra>
-        <view class="section-title">字体大小</view>
-        <view class="font-size-control">
-          <view class="size-btn" @click="decreaseFontSize">
-            <text class="material-symbols-outlined">remove</text>
-          </view>
-          <text class="size-display">{{ fontSize }}</text>
-          <view class="size-btn" @click="increaseFontSize">
-            <text class="material-symbols-outlined">add</text>
+        <view class="settings-col">
+          <view class="settings-label">字体大小</view>
+          <view class="font-size-control">
+            <view class="size-btn" @click="decreaseFontSize">
+              <text class="material-symbols-outlined">remove</text>
+            </view>
+            <text class="size-display">{{ fontSize }}</text>
+            <view class="size-btn" @click="increaseFontSize">
+              <text class="material-symbols-outlined">add</text>
+            </view>
           </view>
         </view>
 
-        <view class="section-title page-mode-title">翻页方式</view>
-        <view class="page-mode-control">
-          <view
-            class="mode-btn"
-            :class="{ 'mode-active': pageMode === 'swipe' }"
-            @click="setPageMode('swipe')"
-          >左右滑动</view>
-          <view
-            class="mode-btn"
-            :class="{ 'mode-active': pageMode === 'cover' }"
-            @click="setPageMode('cover')"
-          >覆盖翻页</view>
+        <view class="settings-col">
+          <view class="settings-label">翻页方式</view>
+          <view class="page-mode-control">
+            <view
+              class="mode-btn"
+              :class="{ 'mode-active': pageMode === 'swipe' }"
+              @click="setPageMode('swipe')"
+            >左右滑动</view>
+            <view
+              class="mode-btn"
+              :class="{ 'mode-active': pageMode === 'cover' }"
+              @click="setPageMode('cover')"
+            >覆盖翻页</view>
+          </view>
         </view>
       </template>
     </ThemePanel>
@@ -280,7 +329,9 @@ import { useThemeStore } from '@/store/theme'
 import ThemePanel from '@/components/ThemePanel.vue'
 import CustomBackground from '@/components/CustomBackground.vue'
 import CoverPage from '@/components/CoverPage.vue'
-import { getChapters, getChapterDetail, getChapterComments, createComment, toggleCommentLike, updateProgress } from '@/api'
+import { useAudioStore } from '@/store/audio'
+import { getChapters, getChapterDetail, getChapterComments, createComment, uploadCommentImage, toggleCommentLike, updateProgress } from '@/api'
+import { resolveImageUrl } from '@/utils/request'
 
 const userStore = useUserStore()
 const theme = useThemeStore()
@@ -323,9 +374,45 @@ const isFlipping = computed(() => flipStage.value !== '')
 const flippingChapter = ref(null)
 const pendingChapter = ref(null)
 
+// ===== 诵读音频（全局 store：离开页面不中断，由悬浮条接管展示） =====
+const audioStore = useAudioStore()
+
+// 工具栏播放键状态：仅当正在播放的就是当前阅读章节时显示暂停
+const isCurrentChapterPlaying = computed(() =>
+  audioStore.playing && audioStore.chapterId === currentChapter.value.id
+)
+
+// 播放/暂停：同章暂停续播，异章换源播放
+const togglePlay = () => {
+  audioStore.toggle(currentChapter.value.id, currentChapter.value.title)
+}
+
+// 初始章节是否已就绪：首次载入不改变后台播放（打开页面不打断/抢播正在进行的诵读），
+// 之后的手动翻章才让诵读跟随
+let chapterInitialized = false
+
+// 手动切章时诵读跟随（连播自动翻章触发的切换因章节一致而被跳过，避免循环重播）
+watch(() => currentChapter.value.id, (id) => {
+  if (!chapterInitialized) return
+  if (audioStore.playing && audioStore.chapterId !== id) {
+    audioStore.play(id, currentChapter.value.title)
+  }
+})
+
+// 连播自动进入下一章：阅读页跟随翻章
+watch(() => audioStore.chapterId, (id) => {
+  if (audioStore.playing && id >= 1 && id <= 81 && id !== currentChapter.value.id) {
+    flipToChapter(id, id > currentChapter.value.id ? 'forward' : 'back')
+  }
+})
+
 // 评论相关
 const comments = ref([])
 const newComment = ref('')
+// 留言配图：本地临时路径列表，发布时先上传再提交留言
+const MAX_COMMENT_IMAGES = 3
+const pendingImages = ref([])
+const sending = ref(false)
 
 // 无操作自动入定间隔（毫秒）
 const ZEN_IDLE_MS = 5000
@@ -376,6 +463,43 @@ const showTapZones = computed(() =>
 const canSendComment = computed(() => {
   return newComment.value.trim() && userStore.isLoggedIn()
 })
+
+// 选择配图（最多3张，超出提示）
+const chooseCommentImages = () => {
+  if (!userStore.isLoggedIn()) {
+    uni.showToast({ title: '请先登录', icon: 'none' })
+    return
+  }
+  const remain = MAX_COMMENT_IMAGES - pendingImages.value.length
+  if (remain <= 0) {
+    uni.showToast({ title: '最多配3张图', icon: 'none' })
+    return
+  }
+  uni.chooseImage({
+    count: remain,
+    sizeType: ['compressed'],
+    success: (res) => {
+      const paths = res.tempFilePaths || (res.tempFiles || []).map(f => f.path) || []
+      pendingImages.value = pendingImages.value.concat(paths).slice(0, MAX_COMMENT_IMAGES)
+    }
+  })
+}
+
+// 移除 / 预览已选配图
+const removePendingImage = (idx) => {
+  pendingImages.value.splice(idx, 1)
+}
+
+const previewPendingImage = (idx) => {
+  uni.previewImage({ urls: pendingImages.value, current: idx })
+}
+
+// 预览留言里的配图
+const previewCommentImages = (images, idx) => {
+  const urls = (images || []).map(resolveImageUrl)
+  if (!urls.length) return
+  uni.previewImage({ urls, current: idx })
+}
 
 // 加载章节列表
 const loadChapters = async () => {
@@ -705,7 +829,7 @@ const submitReply = async (comment) => {
   }
 }
 
-// 发表留言（面板底部固定输入框）
+// 发表留言（面板底部固定输入框，配图先上传再提交）
 const sendComment = async () => {
   if (!canSendComment.value) {
     if (!userStore.isLoggedIn()) {
@@ -716,14 +840,25 @@ const sendComment = async () => {
     }
     return
   }
+  if (sending.value) return
+  sending.value = true
 
   try {
+    // 有配图时先逐张上传，拿到服务端地址再随留言一起提交
+    let images
+    if (pendingImages.value.length) {
+      const results = await Promise.all(pendingImages.value.map(path => uploadCommentImage(path)))
+      images = results.map(r => r.url)
+    }
+
     await createComment({
       chapterId: currentChapter.value.id,
-      content: newComment.value.trim()
+      content: newComment.value.trim(),
+      images
     })
 
     newComment.value = ''
+    pendingImages.value = []
     uni.showToast({
       title: '发布成功',
       icon: 'success'
@@ -733,6 +868,8 @@ const sendComment = async () => {
     await loadComments(currentChapter.value.id)
   } catch (error) {
     console.error('发布评论失败:', error)
+  } finally {
+    sending.value = false
   }
 }
 
@@ -817,6 +954,8 @@ onMounted(async () => {
     loadError.value = '连接服务器超时，请点击屏幕重试'
   } finally {
     isLoading.value = false
+    // 初始章节已定稿：此后的章节切换才联动诵读，页面打开本身不打断后台播放
+    chapterInitialized = true
     // 页面默认进入入定模式；若仍在正常态则启动自动入定倒计时
     startZenIdleTimer()
   }
@@ -866,7 +1005,7 @@ const handleRetry = async () => {
   }
 }
 
-// 监听页面卸载，移除事件监听
+// 监听页面卸载，移除事件监听（诵读由全局 audio store 接管，不随页面销毁）
 onUnmounted(() => {
   stopZenIdleTimer()
   if (flipTimer) {
@@ -1471,6 +1610,51 @@ onUnmounted(() => {
   color: var(--text-2);
 }
 
+// 留言配图网格：1张单图（4:3）/ 2张两列 / 3张三列
+.comment-images {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.comment-images.img-count-1 {
+  grid-template-columns: 1fr;
+  max-width: 220px;
+}
+
+.comment-images.img-count-1 .comment-image-item {
+  aspect-ratio: 4 / 3;
+}
+
+.comment-images.img-count-2 {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 240px;
+}
+
+.comment-images.img-count-2 .comment-image-item,
+.comment-images.img-count-3 .comment-image-item {
+  aspect-ratio: 1;
+}
+
+.comment-images.img-count-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.comment-image-item {
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-2);
+}
+
+.comment-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .comment-actions {
   display: flex;
   align-items: center;
@@ -1642,15 +1826,105 @@ onUnmounted(() => {
   font-size: 14px;
 }
 
-// 底部固定发表输入框
+// 底部固定发表输入框（竖排：已选图片预览条 + 输入行）
 .comment-input-section {
   position: sticky;
   bottom: 0;
   padding: 15px 25px calc(15px + env(safe-area-inset-bottom));
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   background: linear-gradient(0deg, rgba(18,18,18,1) 60%, rgba(18,18,18,0));
   flex-shrink: 0;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+// 选图按钮（输入框左侧）
+.image-pick-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  color: var(--text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.image-pick-btn:active {
+  transform: scale(0.9);
+  background: var(--accent-15);
+  color: var(--accent);
+}
+
+.image-pick-btn .material-symbols-outlined {
+  font-size: 22px;
+}
+
+// 已选图片预览条
+.pending-images {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pending-image-item {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.pending-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.pending-image-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pending-image-remove .remove-icon {
+  font-size: 13px;
+}
+
+// 继续加图的小方块
+.pending-image-add {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  background: var(--surface-1);
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pending-image-add .material-symbols-outlined {
+  font-size: 24px;
 }
 
 .comment-input {
@@ -1687,31 +1961,36 @@ onUnmounted(() => {
   background: var(--accent-15);
 }
 
-// 设置面板（共享 ThemePanel 组件，这里只保留插槽内容用到的样式）
-.settings-section {
-  padding: 16px;
-  background: var(--surface-2);
-  border-radius: 16px;
-  margin-bottom: 15px;
+.send-btn.sending {
+  opacity: 0.6;
 }
 
-.section-title {
-  font-size: 13px;
-  color: var(--text-2);
-  margin-bottom: 10px;
+// 设置面板插槽内容：字体大小 | 翻页方式 同一行两列（外层 .tp-extra 提供 flex 布局）
+.settings-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-label {
+  font-size: 10px;
+  color: var(--text-3, rgba(255, 255, 255, 0.45));
+  letter-spacing: 2px;
 }
 
 // 字体大小步进器（ThemePanel #extra 插槽内容）
 .font-size-control {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 18px;
+  justify-content: flex-start;
+  gap: 12px;
 }
 
 .size-btn {
-  width: 38px;
-  height: 38px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
   background: var(--surface-1, rgba(255, 255, 255, 0.03));
@@ -1719,6 +1998,10 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   color: var(--text-1, #e2e2e2);
+
+  .material-symbols-outlined {
+    font-size: 15px;
+  }
 }
 
 .size-btn:active {
@@ -1726,35 +2009,33 @@ onUnmounted(() => {
 }
 
 .size-display {
-  min-width: 36px;
+  min-width: 24px;
   text-align: center;
-  font-size: 16px;
+  font-size: 13px;
   color: var(--accent, #d4af37);
   font-weight: 500;
 }
 
 // 翻页方式选择（ThemePanel #extra 插槽内容）
-.page-mode-title {
-  margin-top: 18px;
-}
-
 .page-mode-control {
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
 .mode-btn {
   flex: 1;
-  height: 40px;
+  height: 28px;
+  padding: 0 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
   background: var(--surface-1, rgba(255, 255, 255, 0.03));
   color: var(--text-2, rgba(248, 246, 242, 0.8));
-  font-size: 14px;
+  font-size: 12px;
   letter-spacing: 1px;
+  white-space: nowrap;
 }
 
 .mode-btn.mode-active {

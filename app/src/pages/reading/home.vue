@@ -59,6 +59,9 @@
     <view class="home-footer">
       <text class="footer-text">道法自然</text>
     </view>
+
+    <!-- 后台诵读悬浮条 -->
+    <AudioBar />
   </view>
 </template>
 
@@ -67,6 +70,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { useThemeStore } from '@/store/theme'
 import CustomBackground from '@/components/CustomBackground.vue'
+import AudioBar from '@/components/AudioBar.vue'
 import { getChapters } from '@/api'
 
 const userStore = useUserStore()

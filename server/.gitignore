@@ -3,3 +3,6 @@ run.log
 *.iml
 .idea/
 .vscode/
+
+# 上传图片
+upload/
