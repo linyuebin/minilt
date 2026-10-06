@@ -89,8 +89,8 @@
       <view class="body-spacer"></view>
     </scroll-view>
 
-    <!-- 悬浮按钮：写感悟（弹层与道友页共用） -->
-    <view class="fab" @click="openCompose">
+    <!-- 悬浮按钮：写感悟（弹层与道友页共用；悬浮播放条出现时上移到其顶部之上） -->
+    <view class="fab" :class="{ 'fab-above-bar': audio.barVisible }" @click="openCompose">
       <text class="material-symbols-outlined fab-icon">edit</text>
       <text class="fab-text">写感悟</text>
     </view>
@@ -107,6 +107,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useThemeStore } from '@/store/theme'
 import { useUserStore } from '@/store/user'
+import { useAudioStore } from '@/store/audio'
 import CustomBackground from '@/components/CustomBackground.vue'
 import ComposeSheet from '@/components/ComposeSheet.vue'
 import AudioBar from '@/components/AudioBar.vue'
@@ -115,6 +116,7 @@ import { resolveImageUrl } from '@/utils/request'
 
 const theme = useThemeStore()
 const userStore = useUserStore()
+const audio = useAudioStore()
 
 // 返回个人中心
 const goBack = () => {
@@ -458,6 +460,7 @@ const jumpToChapter = (chapterId) => {
   right: 40rpx;
   bottom: calc(60rpx + env(safe-area-inset-bottom));
   z-index: 20;
+  transition: bottom 0.25s ease;
   display: flex;
   align-items: center;
   gap: 10rpx;
@@ -477,5 +480,10 @@ const jumpToChapter = (chapterId) => {
     color: #16130c;
     letter-spacing: 2rpx;
   }
+}
+
+/* 悬浮播放条出现时：按钮底边对齐播放条顶边（本页无 tabbar，播放条底 18rpx + 高 100rpx+2px + 间隙 16rpx） */
+.fab.fab-above-bar {
+  bottom: calc(2px + 134rpx + env(safe-area-inset-bottom));
 }
 </style>

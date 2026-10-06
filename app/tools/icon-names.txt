@@ -5,11 +5,13 @@ arrow_forward
 arrow_forward_ios
 auto_awesome
 auto_stories
+chat
 chat_bubble
 check_box
 check_box_outline_blank
 chevron_right
 close
+download
 edit
 error_outline
 expand_more
@@ -20,6 +22,7 @@ help
 history
 hourglass_empty
 image
+link
 keyboard_double_arrow_up
 lock
 logout
@@ -33,6 +36,7 @@ reply
 restart_alt
 rotate_90_degrees_ccw
 send
+share
 settings
 spa
 thumb_up

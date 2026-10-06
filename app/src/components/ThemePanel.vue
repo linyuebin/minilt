@@ -408,7 +408,7 @@ const handleReset = () => {
   padding: 7px 0;
 }
 
-/* 音色/播放方式胶囊：音色两行四列铺满；播放方式行内靠右 */
+/* 音色/播放方式胶囊：音色固定四列（8 音色两行铺满）；播放方式行内靠右 */
 .tp-pills {
   display: flex;
   flex-wrap: wrap;
@@ -416,9 +416,10 @@ const handleReset = () => {
 }
 .tp-pills-fill {
   flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .tp-pills-fill .tp-pill {
-  flex: 1 1 calc(25% - 6px);
   height: 32px;
   padding: 0;
   border-radius: 9px;

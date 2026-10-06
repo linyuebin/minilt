@@ -95,6 +95,10 @@
               </text>
               <text>{{ item.likeCount }}</text>
             </view>
+            <view class="stat-item" @click.stop="openShare(item)">
+              <text class="material-symbols-outlined stat-icon">share</text>
+              <text>分享</text>
+            </view>
           </view>
         </view>
       </view>
@@ -108,14 +112,17 @@
       <view class="body-spacer"></view>
     </scroll-view>
 
-    <!-- 悬浮按钮：写感悟 -->
-    <view class="fab" @click="openCompose">
+    <!-- 悬浮按钮：写感悟（悬浮播放条出现时上移到其顶部之上，避免被遮挡） -->
+    <view class="fab" :class="{ 'fab-above-bar': audio.barVisible }" @click="openCompose">
       <text class="material-symbols-outlined fab-icon">edit</text>
       <text class="fab-text">写感悟</text>
     </view>
 
     <!-- 写感悟弹层（共享组件） -->
     <ComposeSheet v-model:show="showCompose" @published="onComposePublished" />
+
+    <!-- 分享海报弹层（点赞后新增的分享入口） -->
+    <ShareSheet v-model:show="showShare" :item="shareItem" />
 
     <!-- 后台诵读悬浮条 -->
     <AudioBar />
@@ -124,16 +131,20 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { onShareAppMessage } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user'
 import { useThemeStore } from '@/store/theme'
+import { useAudioStore } from '@/store/audio'
 import CustomBackground from '@/components/CustomBackground.vue'
 import ComposeSheet from '@/components/ComposeSheet.vue'
+import ShareSheet from '@/components/ShareSheet.vue'
 import AudioBar from '@/components/AudioBar.vue'
 import { getCommunityFeed, toggleCommentLike } from '@/api'
 import { resolveImageUrl } from '@/utils/request'
 
 const userStore = useUserStore()
 const theme = useThemeStore()
+const audio = useAudioStore()
 
 // ============= 快捷筛选 =============
 const filters = [
@@ -248,6 +259,29 @@ const openCompose = () => {
   }
   showCompose.value = true
 }
+
+// ============= 分享海报弹层 =============
+const showShare = ref(false)
+const shareItem = ref(null)
+
+const openShare = (item) => {
+  shareItem.value = item
+  showShare.value = true
+}
+
+// 小程序端「微信分享」按钮（open-type=share）触发页面转发
+onShareAppMessage(() => {
+  const item = shareItem.value
+  if (!item) {
+    return { title: '道德经 · 道友感悟', path: '/pages/community/index' }
+  }
+  return {
+    title: `道友感悟：${(item.content || '').slice(0, 24)}…`,
+    path: item.chapterId
+      ? `/pages/reading/index?chapterId=${item.chapterId}`
+      : '/pages/community/index'
+  }
+})
 
 // 发布成功后回到"全部感悟"并刷新，让新感悟立即可见
 const onComposePublished = () => {
@@ -573,6 +607,7 @@ onMounted(async () => {
   right: 40rpx;
   bottom: calc(150rpx + env(safe-area-inset-bottom));
   z-index: 30;
+  transition: bottom 0.25s ease;
   display: flex;
   align-items: center;
   gap: 10rpx;
@@ -592,5 +627,10 @@ onMounted(async () => {
     color: #16130c;
     letter-spacing: 2rpx;
   }
+}
+
+/* 悬浮播放条出现时：按钮底边对齐播放条顶边（播放条底 50px+14rpx + 高 100rpx+2px + 间隙 16rpx） */
+.fab.fab-above-bar {
+  bottom: calc(52px + 130rpx + env(safe-area-inset-bottom));
 }
 </style>
